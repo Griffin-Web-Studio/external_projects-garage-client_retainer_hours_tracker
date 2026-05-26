@@ -3,23 +3,86 @@
 {
 	"name": "Python 3",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/python:3-3.14-trixie",
+	"image": "mcr.microsoft.com/devcontainers/python:3-trixie",
 	"features": {
 		"ghcr.io/devcontainers-extra/features/pnpm:2": {}
-	}
-
+	},
+	//
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
-
+	//
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-
+	//
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "pip3 install --user -r requirements.txt",
-
+	"postCreateCommand": ".devcontainer/post_create.sh",
+	//
 	// Configure tool-specific properties.
-	// "customizations": {},
-
+	"customizations": {
+		"vscode": {
+			"extensions": [
+        "streetsidesoftware.code-spell-checker-british-english",
+        "GitLab.gitlab-workflow",
+        "eamodio.gitlens",
+        "SonarSource.sonarlint-vscode",
+        "MASSHUU12.too-long-line-limit",
+        "rodolphebarbanneau.python-docstring-highlighter",
+        "ms-python.black-formatter",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "alfredbirk.tailwind-documentation",
+        "njpwerner.autodocstring",
+        "qwtel.sqlite-viewer",
+        "ms-python.mypy-type-checker",
+        "bigonesystems.django",
+        "Gruntfuggly.todo-tree",
+        "EditorConfig.EditorConfig",
+        "ms-python.isort",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "python.testing.pytestArgs": [
+          "tests"
+        ],
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "files.exclude": {
+          "**/__pycache__": true
+        },
+        "editor.formatOnPaste": true,
+        "editor.formatOnSave": true,
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter"
+        },
+        "[json]": {
+          "editor.defaultFormatter": "vscode.json-language-features"
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[ts]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "emmet.includeLanguages": {
+          "django-html": "html"
+        }
+      }
+    }
+  },
+  "remoteEnv": {
+    // prevent corepack from asking to install yarn at container post create
+    //   script
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
+  },
+  // Permit providing extra envvars to devcontainer
+  "runArgs": [
+    "--env-file",
+    ".devcontainer/.env"
+  ]
+	//
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 }
