@@ -16,6 +16,8 @@ from pathlib import Path
 from core.app_settings import AppConfig
 from core.utils.env import populate_secure_secret
 
+# ─────────────────────────────────────────────────────────| Environment/App |──
+# Helper accessor
 _env = environ.Env()
 
 # Application base path.
@@ -27,6 +29,9 @@ environ.Env.read_env(BASE_DIR / ".env")
 # Load app settings
 app_config: AppConfig = AppConfig.initialise(BASE_DIR / "settings.ini", _env)
 
+
+# ────────────────────────────────────────────────────────────────| Security |──
+#          See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 SECRET_KEY = _env("SECRET_KEY")
 
 if SECRET_KEY == "your-secret-key-here":
@@ -36,6 +41,8 @@ if SECRET_KEY == "your-secret-key-here":
 DEBUG = _env.bool("DEBUG", default=False)
 
 ALLOWED_HOSTS = _env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+
+# ─────────────────────────────────────────────────────────────| Application |──
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -76,7 +83,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "core.wsgi.application"
 
 
-# Database
+# ────────────────────────────────────────────────────────────────| Database |──
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
@@ -87,7 +94,7 @@ DATABASES = {
 }
 
 
-# Password validation
+# ─────────────────────────────────────────────────────| Password validation |──
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -105,20 +112,16 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
+# ────────────────────────────────────────────────────| Internationalisation |──
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
+# ──────────────────────────────────| Static files (CSS, JavaScript, Images) |──
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
