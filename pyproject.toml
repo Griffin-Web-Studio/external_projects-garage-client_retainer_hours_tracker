@@ -7,8 +7,9 @@ dependencies = [
   "factory-boy>=3.3.3",
   "Django>=6.0.3",
   "whitenoise>=6.9.0",
-  "python-decouple>=3.8",
+  "django-environ>=0.13",
   "python-dotenv>=1.2.1",
+  "mozilla-django-oidc>=4.0",
 ]
 
 [project.optional-dependencies]
