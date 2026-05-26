@@ -68,7 +68,9 @@
         },
         "emmet.includeLanguages": {
           "django-html": "html"
-        }
+        },
+        // temp
+        "python.useEnvironmentsExtension": true
       }
     }
   },
