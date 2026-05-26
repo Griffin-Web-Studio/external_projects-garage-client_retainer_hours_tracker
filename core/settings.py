@@ -13,10 +13,20 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import environ
 from pathlib import Path
 
+from core.app_settings import AppConfig
 from core.utils.env import populate_secure_secret
 
 _env = environ.Env()
+
+# Application base path.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load env vars
+environ.Env.read_env(BASE_DIR / ".env")
+
+# Load app settings
+app_config: AppConfig = AppConfig.initialise(BASE_DIR / "settings.ini", _env)
+
 SECRET_KEY = _env("SECRET_KEY")
 
 if SECRET_KEY == "your-secret-key-here":
