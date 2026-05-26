@@ -156,3 +156,44 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+# ────────────────────────────────────────────────────────| Auth / redirects |──
+
+# TODO: Create User Model
+# AUTH_USER_MODEL = "tracker.Employee"
+
+LOGIN_URL = "/login"
+LOGIN_REDIRECT_URL = "/dashboard"
+LOGOUT_REDIRECT_URL = "/login"
+
+AUTHENTICATION_BACKENDS = [
+    *(
+        ["tracker.auth_backend.RetainerOIDCBackend"]
+        if app_config.oidc_enabled
+        else []
+    ),
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# ──────────────────────────────────────────────| OIDC (mozilla-django-oidc) |──
+# Only set these when OIDC is actually configured - mozilla-django-oidc will
+# error on startup if the endpoint settings are missing but the app is loaded.
+
+if app_config.oidc_enabled:
+    OIDC_RP_CLIENT_ID = app_config.oidc_client_id
+    OIDC_RP_CLIENT_SECRET = app_config.oidc_client_secret
+
+    OIDC_OP_AUTHORIZATION_ENDPOINT = (
+        f"{app_config.oidc_issuer}/oauth/v2/authorize"
+    )
+    OIDC_OP_TOKEN_ENDPOINT = f"{app_config.oidc_issuer}/oauth/v2/token"
+    OIDC_OP_USER_ENDPOINT = f"{app_config.oidc_issuer}/oidc/v1/userinfo"
+    OIDC_OP_JWKS_ENDPOINT = f"{app_config.oidc_issuer}/oauth/v2/keys"
+    OIDC_OP_LOGOUT_ENDPOINT = f"{app_config.oidc_issuer}/oidc/v1/end_session"
+
+    OIDC_RP_SIGN_ALGO = "RS256"
+    OIDC_USE_PKCE = True
+    OIDC_PKCE_CODE_CHALLENGE_METHOD = "S256"
+    OIDC_RP_SCOPES = "openid email profile"
+    OIDC_STORE_ACCESS_TOKEN = False
+    OIDC_STORE_ID_TOKEN = False
