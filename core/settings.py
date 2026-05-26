@@ -105,7 +105,7 @@ WSGI_APPLICATION = "core.wsgi.application"
 
 
 # ────────────────────────────────────────────────────────────────| Database |──
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+#              See https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
     "default": {
@@ -121,6 +121,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # ─────────────────────────────────────────────────────| Password validation |──
+# See
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 _pv = "django.contrib.auth.password_validation"
@@ -138,7 +139,7 @@ _custom_validators: list[dict[str, str]] = []
 AUTH_PASSWORD_VALIDATORS = _django_validators + _custom_validators
 
 # ────────────────────────────────────────────────────| Internationalisation |──
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+#                         See https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = "en-gb"
 TIME_ZONE = "UTC"
@@ -147,7 +148,7 @@ USE_TZ = True
 
 
 # ──────────────────────────────────| Static files (CSS, JavaScript, Images) |──
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+#                  See https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = _env("STATIC_URL", default="static/")
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -181,8 +182,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # ──────────────────────────────────────────────| OIDC (mozilla-django-oidc) |──
-# Only set these when OIDC is actually configured - mozilla-django-oidc will
-# error on startup if the endpoint settings are missing but the app is loaded.
+#     Only set these when OIDC is actually configured - mozilla-django-oidc will
+#   error on startup if the endpoint settings are missing but the app is loaded.
 
 if app_config.oidc_enabled:
     OIDC_RP_CLIENT_ID = app_config.oidc_client_id
@@ -204,6 +205,7 @@ if app_config.oidc_enabled:
     OIDC_STORE_ID_TOKEN = False
 
 # ───────────────────────────────────────────────────────────────────| Email |──
+#     See https://docs.djangoproject.com/en/6.0/ref/settings/#default-from-email
 
 DEFAULT_FROM_EMAIL = _env("DEFAULT_FROM_EMAIL", default="local@localhost")
 EMAIL_BACKEND = (
@@ -213,6 +215,7 @@ EMAIL_BACKEND = (
 )
 
 # ─────────────────────────────────────────────────────────────────| Logging |──
+#                See https://docs.djangoproject.com/en/6.0/ref/settings/#logging
 
 LOGGING = {
     "version": 1,
