@@ -7,7 +7,7 @@ pipx install uv
 uv sync --all-extras
 
 source .venv/bin/activate
-yarn
+pnpm install
 
 # run setup script
 ./scripts/setup_settings.sh
