@@ -135,7 +135,7 @@ AUTH_PASSWORD_VALIDATORS = _django_validators + _custom_validators
 # ────────────────────────────────────────────────────| Internationalisation |──
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "en-gb"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
