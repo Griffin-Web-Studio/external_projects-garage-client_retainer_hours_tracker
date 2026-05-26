@@ -118,20 +118,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ─────────────────────────────────────────────────────| Password validation |──
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+_pv = "django.contrib.auth.password_validation"
+_django_validators = [
+    {"NAME": f"{_pv}.{cls}"}
+    for cls in [
+        "UserAttributeSimilarityValidator",
+        "MinimumLengthValidator",
+        "CommonPasswordValidator",
+        "NumericPasswordValidator",
+    ]
 ]
+_custom_validators: list[dict[str, str]] = []
+
+AUTH_PASSWORD_VALIDATORS = _django_validators + _custom_validators
 
 # ────────────────────────────────────────────────────| Internationalisation |──
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
