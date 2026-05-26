@@ -197,3 +197,12 @@ if app_config.oidc_enabled:
     OIDC_RP_SCOPES = "openid email profile"
     OIDC_STORE_ACCESS_TOKEN = False
     OIDC_STORE_ID_TOKEN = False
+
+# ───────────────────────────────────────────────────────────────────| Email |──
+
+DEFAULT_FROM_EMAIL = _env("DEFAULT_FROM_EMAIL", default="local@localhost")
+EMAIL_BACKEND = (
+    "django.core.mail.backends.console.EmailBackend"
+    if DEBUG
+    else "django.core.mail.backends.smtp.EmailBackend"
+)
