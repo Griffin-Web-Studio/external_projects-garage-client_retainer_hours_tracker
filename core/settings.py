@@ -51,6 +51,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # 3rd Party packages
+    *(["mozilla_django_oidc"] if app_config.oidc_enabled else []),
+    *(["django_browser_reload", "django_watchfiles"] if DEBUG else []),
 ]
 
 MIDDLEWARE = [
@@ -62,6 +65,17 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # 3rd Party packages
+    *(
+        ["mozilla_django_oidc.middleware.SessionRefresh"]
+        if app_config.oidc_enabled
+        else []
+    ),
+    *(
+        ["django_browser_reload.middleware.BrowserReloadMiddleware"]
+        if DEBUG
+        else []
+    ),
 ]
 
 ROOT_URLCONF = "core.urls"
