@@ -1,0 +1,33 @@
+[project]
+name = "client-retainer-hours-tracker"
+version = "0.0.0"
+description = "App for tracking client retainer hours"
+requires-python = ">=3.14"
+dependencies = [
+  "factory-boy>=3.3.3",
+  "Django>=6.0.3",
+  "whitenoise>=6.9.0",
+  "python-decouple>=3.8",
+  "python-dotenv>=1.2.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest-django",
+  "pytest-cov",
+  "black>=26.3.0",
+  "django-browser-reload>=1.21.0",
+  "django-watchfiles>=1.4.0",
+  "pre_commit>=4.5.1",
+  "virtualenv>=21.2.0",
+]
+
+[tool.black]
+line-length = 80
+exclude = '''
+/(
+    migrations
+  | venv
+  | .git
+)/
+'''
