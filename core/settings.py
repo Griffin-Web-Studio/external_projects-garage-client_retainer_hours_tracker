@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     # 3rd Party packages
     *(["mozilla_django_oidc"] if app_config.oidc_enabled else []),
     *(["django_browser_reload", "django_watchfiles"] if DEBUG else []),
+    # base app
+    "tracker",
 ]
 
 MIDDLEWARE = [
@@ -91,6 +93,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # Injects APP_NAME and OIDC_ENABLED into every template context
+                # "tracker.context_processors.app_settings",
+                # TODO: for now not implemented
             ],
         },
     },
