@@ -1,0 +1,47 @@
+/* ─────────────────────────────────────────────────────────| Tailwind v4 |── */
+@import "tailwindcss";
+
+/* ────────────────────────────────────────────────────────| Source paths |── */
+/* Relative to this file (static/src/global.css) */
+@source "../../**/*.html";
+
+/* ───────────────────────────────────────────────────────────────| Theme |── */
+@theme {
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* ───────────────────────────────────────────────────────────| Safe list |── */
+/* Dynamic classes from Python template tags - won't appear literally in
+templates so must be forced in. */
+@source inline("bg-{emerald,amber,red,slate}-500");
+@source inline("bg-{emerald,amber,red,indigo,purple}-500/10");
+@source inline("text-{emerald,amber,red,indigo,purple}-400");
+@source inline("ring-{emerald,amber,red}-500/20");
+
+/* ────────────────────────────────────────────────────────────────| Base |── */
+@layer base {
+  html {
+    background-color: #080c14;
+    color-scheme: dark;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  textarea,
+  select {
+    @apply bg-white/5 border border-white/10 rounded-lg
+           px-3 py-2 text-sm text-slate-200
+           placeholder-slate-600 focus:outline-none
+           focus:ring-2 focus:ring-indigo-500/50
+           focus:border-indigo-500/50
+           transition-colors w-full;
+  }
+
+  select option {
+    background-color: #1e2030;
+  }
+}
