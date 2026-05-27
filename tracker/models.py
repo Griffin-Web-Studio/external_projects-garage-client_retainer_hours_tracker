@@ -190,3 +190,46 @@ class ClientTerm(models.Model):
 
     def __str__(self):
         return f"{self.client.name} — Term {self.term_number}"
+
+
+# ───────────────────────────────────────────────────────────────| TimeEntry |──
+class TimeEntry(models.Model):
+    """Time Entry model
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        TimeEntry: Time Entry model
+    """
+
+    TYPE_SUPPORT = "SUPPORT"
+    TYPE_DEVELOPMENT = "DEVELOPMENT"
+    TYPE_CHOICES: list[tuple[str, str]] = [
+        (TYPE_SUPPORT, "Support"),
+        (TYPE_DEVELOPMENT, "Development"),
+    ]
+
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="time_entries"
+    )
+    term = models.ForeignKey(
+        ClientTerm, on_delete=models.CASCADE, related_name="time_entries"
+    )
+    employee = models.ForeignKey(
+        Employee, on_delete=models.PROTECT, related_name="time_entries"
+    )
+    date = models.DateField()
+    hours = models.FloatField()
+    description = models.TextField()
+    type = models.CharField(
+        max_length=20, choices=TYPE_CHOICES, default=TYPE_SUPPORT
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.client.name} — {self.hours}h {self.type} on {self.date}"
