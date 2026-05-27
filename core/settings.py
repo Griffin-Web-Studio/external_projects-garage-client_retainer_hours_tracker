@@ -177,7 +177,7 @@ AUTHENTICATION_BACKENDS = [
         if app_config.oidc_enabled
         else []
     ),
-    "django.contrib.auth.backends.ModelBackend",
+    "core.backends.SuperuserOnlyModelBackend",
 ]
 
 # ──────────────────────────────────────────────| OIDC (mozilla-django-oidc) |──
