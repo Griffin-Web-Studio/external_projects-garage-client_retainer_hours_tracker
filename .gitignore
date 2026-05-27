@@ -1,5 +1,7 @@
 # compiled static output (regenerated via `pnpm build`)
 static/build/
+
+# App settings
 settings.ini
 
 # Django
