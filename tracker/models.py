@@ -233,3 +233,34 @@ class TimeEntry(models.Model):
 
     def __str__(self):
         return f"{self.client.name} — {self.hours}h {self.type} on {self.date}"
+
+
+# ──────────────────────────────────────────────────────────| OverageBilling |──
+class OverageBilling(models.Model):
+    """Overage Billing model
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        OverageBilling: Overage Billing model
+    """
+
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="overage_billings"
+    )
+    term = models.ForeignKey(
+        ClientTerm, on_delete=models.CASCADE, related_name="overage_billings"
+    )
+    type = models.CharField(max_length=20)  # SUPPORT | DEVELOPMENT
+    hours_charged = models.FloatField()
+    invoice_ref = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    billed_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-billed_at"]
+
+    def __str__(self):
+        return f"{self.client.name} — {self.hours_charged}h {self.type} billed"

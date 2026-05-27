@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Client, ClientTerm, Employee, TimeEntry
+from .models import Client, ClientTerm, Employee, OverageBilling, TimeEntry
 
 
 @admin.register(Employee)
@@ -74,3 +74,15 @@ class TimeEntryAdmin(admin.ModelAdmin):
     )
     list_filter = ("type",)
     search_fields = ("client__name", "description")
+
+
+@admin.register(OverageBilling)
+class OverageBillingAdmin(admin.ModelAdmin):
+    list_display = (
+        "client",
+        "term",
+        "type",
+        "hours_charged",
+        "invoice_ref",
+        "billed_at",
+    )
