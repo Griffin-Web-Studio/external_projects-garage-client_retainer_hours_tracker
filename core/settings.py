@@ -165,8 +165,7 @@ STORAGES = {
 
 # ────────────────────────────────────────────────────────| Auth / redirects |──
 
-# TODO: Create User Model
-# AUTH_USER_MODEL = "tracker.Employee"
+AUTH_USER_MODEL = "tracker.Employee"
 
 LOGIN_URL = "/login"
 LOGIN_REDIRECT_URL = "/dashboard"
