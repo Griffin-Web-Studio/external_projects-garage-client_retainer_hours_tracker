@@ -49,6 +49,7 @@
         "files.exclude": {
           "**/__pycache__": true
         },
+        "files.insertFinalNewline": true,
         "editor.formatOnPaste": true,
         "editor.formatOnSave": true,
         "[python]": {
