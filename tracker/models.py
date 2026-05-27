@@ -113,3 +113,31 @@ class Employee(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.name} <{self.email}>"
+
+
+# ──────────────────────────────────────────────────────────────────| Client |──
+class Client(models.Model):
+    """Client model
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        Client: Client model
+    """
+
+    name = models.CharField(max_length=200)
+    notes = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def current_term(self):
+        return self.terms.order_by("-term_number").first()

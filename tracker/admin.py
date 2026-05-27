@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Employee
+from .models import Client, Employee
 
 
 @admin.register(Employee)
@@ -9,9 +9,6 @@ class EmployeeAdmin(UserAdmin):
     list_filter = ("role", "is_active", "is_staff")
     search_fields = ("email", "name")
     ordering = ("email",)
-
-    # UserAdmin defaults expect a `username` field — override these
-    # since your model uses `email` as the USERNAME_FIELD instead
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal", {"fields": ("name",)}),
@@ -43,3 +40,10 @@ class EmployeeAdmin(UserAdmin):
         if obj and not obj.has_usable_password():
             return self.readonly_fields + ("password",)
         return self.readonly_fields
+
+
+@admin.register(Client)
+class ClientAdmin(admin.ModelAdmin):
+    list_display = ("name", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("name",)
