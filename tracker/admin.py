@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Client, Employee
+from .models import Client, ClientTerm, Employee
 
 
 @admin.register(Employee)
@@ -47,3 +47,16 @@ class ClientAdmin(admin.ModelAdmin):
     list_display = ("name", "is_active", "created_at")
     list_filter = ("is_active",)
     search_fields = ("name",)
+
+
+@admin.register(ClientTerm)
+class ClientTermAdmin(admin.ModelAdmin):
+    list_display = (
+        "client",
+        "term_number",
+        "start_date",
+        "end_date",
+        "monthly_hours",
+        "carry_over_type",
+    )
+    list_filter = ("carry_over_type",)

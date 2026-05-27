@@ -127,7 +127,7 @@ class Client(models.Model):
     """
 
     name = models.CharField(max_length=200)
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -141,3 +141,52 @@ class Client(models.Model):
     @property
     def current_term(self):
         return self.terms.order_by("-term_number").first()
+
+
+# ──────────────────────────────────────────────────────────────| ClientTerm |──
+class ClientTerm(models.Model):
+    """Client Term model
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        ClientTerm: Client Term model
+    """
+
+    CARRY_NONE = "NONE"
+    CARRY_CONVERT_DEV = "CONVERT_TO_DEV"
+    CARRY_MIGRATE = "MIGRATE_SUPPORT"
+    CARRY_CHOICES: list[tuple[str, str]] = [
+        (CARRY_NONE, "First term (no carryover)"),
+        (
+            CARRY_CONVERT_DEV,
+            "Convert remaining support > development hours (/2)",
+        ),
+        (CARRY_MIGRATE, "Migrate support hours forward (max 6h)"),
+    ]
+
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="terms"
+    )
+    term_number = models.PositiveIntegerField()
+    start_date = models.DateField()
+    end_date = models.DateField()  # set to start_date + 1 year on save
+    monthly_hours = models.FloatField()
+
+    # Carryover from the previous term
+    carry_over_type = models.CharField(
+        max_length=20, choices=CARRY_CHOICES, default=CARRY_NONE
+    )
+    dev_hours_from_conversion = models.FloatField(default=0)  # CONVERT_TO_DEV
+    migrated_support_hours = models.FloatField(default=0)  # MIGRATE_SUPPORT
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [["client", "term_number"]]
+        ordering = ["term_number"]
+
+    def __str__(self):
+        return f"{self.client.name} — Term {self.term_number}"
