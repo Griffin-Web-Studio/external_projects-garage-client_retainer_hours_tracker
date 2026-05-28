@@ -10,21 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-import environ
 from pathlib import Path
 
-from core.app_settings import AppConfig
-from core.utils.env import populate_secure_secret
+from core.app_settings import AppConfig, AppEnv
 
 # ─────────────────────────────────────────────────────────| Environment/App |──
-# Helper accessor
-_env = environ.Env()
-
 # Application base path.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load env vars
-environ.Env.read_env(BASE_DIR / ".env")
+# Load app environment variables
+app_env: AppEnv = AppEnv.initialise(BASE_DIR / ".env")
 
 # Load app settings
 app_config: AppConfig = AppConfig.initialise(BASE_DIR / "settings.ini")
@@ -32,15 +27,11 @@ app_config: AppConfig = AppConfig.initialise(BASE_DIR / "settings.ini")
 
 # ────────────────────────────────────────────────────────────────| Security |──
 #          See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-SECRET_KEY = _env("SECRET_KEY")
+SECRET_KEY = app_env.secret_key
 
-if SECRET_KEY == "your-secret-key-here":
-    populate_secure_secret(BASE_DIR)
+DEBUG = app_env.debug
 
-
-DEBUG = _env.bool("DEBUG", default=False)
-
-ALLOWED_HOSTS = _env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+ALLOWED_HOSTS = app_env.allowed_hosts
 
 # ─────────────────────────────────────────────────────────────| Application |──
 
@@ -110,7 +101,7 @@ WSGI_APPLICATION = "core.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / _env("DB_NAME", default="db.sqlite3"),
+        "NAME": BASE_DIR / app_config.db_name,
     }
 }
 
@@ -150,7 +141,7 @@ USE_TZ = True
 # ──────────────────────────────────| Static files (CSS, JavaScript, Images) |──
 #                  See https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = _env("STATIC_URL", default="static/")
+STATIC_URL = app_env.static_url
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_FINDERS = [
@@ -206,7 +197,7 @@ if app_config.oidc_enabled:
 # ───────────────────────────────────────────────────────────────────| Email |──
 #     See https://docs.djangoproject.com/en/6.0/ref/settings/#default-from-email
 
-DEFAULT_FROM_EMAIL = _env("DEFAULT_FROM_EMAIL", default="local@localhost")
+DEFAULT_FROM_EMAIL = app_env.default_from_email
 EMAIL_BACKEND = (
     "django.core.mail.backends.console.EmailBackend"
     if DEBUG

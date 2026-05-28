@@ -16,18 +16,25 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar
 
+import environ
+
+from core.utils.env import populate_secure_secret
+
 
 @dataclass(frozen=True)
 class AppConfig:
     """
     Immutable application configuration singleton.
-    Initialised once at startup from settings.ini (.env for secrets).
+    Initialised once at startup from settings.ini.
     Access anywhere via AppConfig.get() - no need to go through
     django.conf.settings for app-level values.
     """
 
     # ────────────────────────────────────────────────────────────| Branding |──
     app_name: str
+
+    # ── Database ──────────────────────────────────────────────────────────────
+    db_name: str
 
     # ──────────────────────────────────────────────| Hours / business rules |──
     term_months: int
@@ -92,7 +99,9 @@ class AppConfig:
             app_name=config.get(
                 "branding", "app_name", fallback="RetainerTracker"
             ),
-            # Hours
+            # ── Database ──────────────────────────────────────────────────────
+            db_name=config.get("db", "DB_NAME", fallback="db.sqlite3"),
+            # ── Hours / business rules ────────────────────────────────────────
             term_months=config.getint("hours", "term_months", fallback=12),
             dev_conversion_ratio=config.getfloat(
                 "hours", "dev_conversion_ratio", fallback=2.0
@@ -139,4 +148,77 @@ class AppConfig:
                 "AppConfig.initialise() must be called in settings.py "
                 "before anything else imports it."
             )
+        return cls._instance
+
+
+@dataclass(frozen=True)
+class AppEnv:
+    """
+    Immutable application environment singleton.
+    Initialised once at startup from .env.
+    Access anywhere via AppEnv.get() - no need to go through
+    django.conf.settings for app-level values.
+    """
+
+    secret_key: str
+    debug: bool
+    allowed_hosts: list[str]
+    static_url: str
+    default_from_email: str
+
+    # ───────────────────────────────────────────────────────────| Singleton |──
+    # ClassVar fields are excluded from __init__ / __hash__ by the dataclass
+    # machinery, so frozen=True doesn't prevent us setting this class attribute.
+    _instance: ClassVar[AppEnv | None] = None
+
+    # ─────────────────────────────────────────────────────────────| Factory |──
+
+    @classmethod
+    def initialise(cls, env_path: Path) -> AppEnv:
+        """
+        Build and store the singleton.
+        Call once in settings.py after environ.Env.read_env() has run.
+        Subsequent calls are no-ops and return the existing instance.
+
+        `env` is the django-environ Env() accessor already configured in
+        settings.py - keeps this class free of a hard environ dependency.
+        """
+        if cls._instance is not None:
+            return cls._instance
+
+        # Auto-create .env from the example file on first run
+        if not env_path.exists():
+            example = env_path.parent / (env_path.name + ".example")
+            if example.exists():
+                import shutil
+
+                shutil.copy(example, env_path)
+                print(
+                    f"Created {env_path.name} from {example.name} -"
+                    " review it before continuing."
+                )
+            else:
+                print(
+                    f"Warning: {env_path.name} not found and no .example to"
+                    " copy from. All business settings will use built-in "
+                    "defaults."
+                )
+
+        env = environ.Env()
+        environ.Env.read_env(env_path)
+
+        if env("SECRET_KEY") == "your-secret-key-here":
+            populate_secure_secret(env_path)
+
+        cls._instance = cls(
+            secret_key=env("SECRET_KEY"),
+            debug=env.bool("DEBUG", default=False),
+            allowed_hosts=env.list(
+                "ALLOWED_HOSTS", default=["localhost", "127.0.0.1"]
+            ),
+            static_url=env("STATIC_URL", default="static/"),
+            default_from_email=env(
+                "DEFAULT_FROM_EMAIL", default="local@localhost"
+            ),
+        )
         return cls._instance
