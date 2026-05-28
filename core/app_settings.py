@@ -82,7 +82,7 @@ class AppConfig:
                     "defaults."
                 )
 
-        config = configparser.ConfigParser()
+        config = configparser.ConfigParser(inline_comment_prefixes=(";", "#"))
         config.read(ini_path)
 
         oidc_issuer = config.get("auth", "OIDC_ISSUER", fallback="")
