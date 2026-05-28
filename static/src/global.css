@@ -1,9 +1,8 @@
 /* ─────────────────────────────────────────────────────────| Tailwind v4 |── */
-@import "tailwindcss";
+@import "tailwindcss" source("../../");
 
 /* ────────────────────────────────────────────────────────| Source paths |── */
-/* Relative to this file (static/src/global.css) */
-@source "../../**/*.html";
+@source "**/*.html";
 
 /* ───────────────────────────────────────────────────────────────| Theme |── */
 @theme {
