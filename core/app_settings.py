@@ -44,6 +44,7 @@ class AppConfig:
 
     # ────────────────────────────────────────────────────────────────| OIDC |──
     oidc_enabled: bool
+    oidc_label: str
     oidc_issuer: str
     oidc_client_id: str
     oidc_client_secret: str
@@ -115,6 +116,11 @@ class AppConfig:
             # ── OIDC ──────────────────────────────────────────────────────────
             oidc_enabled=bool(oidc_issuer),
             oidc_issuer=oidc_issuer,
+            oidc_label=(
+                config.get("auth", "OIDC_LABEL", fallback="")
+                if oidc_issuer
+                else ""
+            ),
             oidc_client_id=(
                 config.get("auth", "OIDC_CLIENT_ID", fallback="")
                 if oidc_issuer

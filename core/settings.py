@@ -84,9 +84,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                # Injects APP_NAME and OIDC_ENABLED into every template context
-                # "tracker.context_processors.app_settings",
-                # TODO: for now not implemented
+                # base app: Injects APP_NAME and OIDC_ENABLED into every
+                # template context
+                "tracker.context_processors.app_settings",
             ],
         },
     },

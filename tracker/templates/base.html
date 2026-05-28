@@ -1,0 +1,18 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'build/css/final.css' %}">
+</head>
+
+<body class="bg-linear-to-br from-primary to-primary-alt text-slate-200 font-sans antialiased">
+
+  <main class="min-h-screen flex items-center justify-center px-4">
+    {% block content %}{% endblock %}
+  </main>
+
+</body>
+</html>
