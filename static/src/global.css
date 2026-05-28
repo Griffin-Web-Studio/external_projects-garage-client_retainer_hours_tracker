@@ -5,9 +5,27 @@
 @source "**/*.html";
 
 /* ───────────────────────────────────────────────────────────────| Theme |── */
+
+:root {
+  /*
+   * brand colours
+   */
+  --brand-primary: hsl(219, 57%, 25%);
+  --brand-primary-alt: hsl(219, 57%, calc(25% - 10%));
+  --brand-secondary: hsl(207, 62%, 62%);
+  --brand-secondary-alt: hsl(207, 62%, calc(62% - 10%));
+}
+
 @theme {
   --font-sans: "Plus Jakarta Sans", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+}
+
+@theme inline {
+  --color-primary: var(--brand-primary);
+  --color-primary-alt: var(--brand-primary-alt);
+  --color-secondary: var(--brand-secondary);
+  --color-secondary-alt: var(--brand-secondary-alt);
 }
 
 /* ───────────────────────────────────────────────────────────| Safe list |── */
