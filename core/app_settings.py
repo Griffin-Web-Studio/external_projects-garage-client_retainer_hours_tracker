@@ -64,7 +64,9 @@ class AppConfig:
 
         # Auto-create settings.ini from the example file on first run
         if not ini_path.exists():
-            example = ini_path.parent / (ini_path.name + ".example")
+            example = ini_path.parent / (
+                ini_path.stem + ".example" + ini_path.suffix
+            )
             if example.exists():
                 import shutil
 
