@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Attributions - {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-16">
+  <h1 class="text-2xl font-semibold text-white mb-2">Attributions</h1>
+
+  <p class="text-slate-300 text-sm mb-10">
+    Third-party assets and libraries used in this project, along with their
+    respective licenses.
+  </p>
+
+  <div class="space-y-6">
+    {# Solar Icons #}
+    <div
+      class="relative p-0.75
+            flex flex-col items-center justify-center overflow-hidden
+            border border-secondary-alt/30 rounded-2xl
+            shadow-[0px_20px_60px_60px_rgba(0,0,0,0.3)]"
+    >
+      <div
+        class="absolute top-[50%] left-[50%]
+              w-full h-full rounded-full
+              bg-secondary opacity-25 blur-2xl z-1
+              animate-blob-bounce"></div>
+
+      <div
+        class="z-3 p-6 border rounded-xl overflow-hidden w-full
+              border-secondary-alt/30
+              bg-secondary/20 backdrop-blur-xl"
+      >
+        <div class="flex items-start justify-between gap-4 mb-3">
+          <div>
+            <h2 class="text-base font-medium text-white">Solar Icons</h2>
+
+            <p class="text-xs text-slate-400 mt-0.5">
+              Icon library by 480 Design -
+              <a
+                href="https://github.com/saoudi-h/solar-icons"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:text-slate-300 transition-colors"
+              >
+                github.com/saoudi-h/solar-icons
+              </a>
+            </p>
+          </div>
+
+          <div class="flex gap-2 shrink-0">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">MIT</span>
+
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">CC BY 4.0</span>
+          </div>
+        </div>
+
+        <ul class="text-sm text-slate-100 space-y-1">
+          <li>
+            © 2026 Solar Icons - Code licensed under the
+            <span class="text-slate-400">MIT License</span>
+          </li>
+
+          <li>
+            Icons by <span class="text-slate-400">480 Design</span>,
+            licensed under
+            <a
+              href="https://creativecommons.org/licenses/by/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-indigo-300 hover:text-indigo-200 transition-colors"
+            >
+              CC BY 4.0
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="mt-10 text-xs text-secondary">
+    <a href="javascript:history.back()" class="hover:text-secondary-alt transition-colors">&larr; Go back</a>
+  </p>
+</div>
+{% endblock %}
