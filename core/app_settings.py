@@ -50,7 +50,7 @@ class AppConfig:
     # ─────────────────────────────────────────────────────────────| Factory |──
 
     @classmethod
-    def initialise(cls, ini_path: Path, env) -> AppConfig:
+    def initialise(cls, ini_path: Path) -> AppConfig:
         """
         Build and store the singleton.
         Call once in settings.py after environ.Env.read_env() has run.
@@ -83,10 +83,10 @@ class AppConfig:
         config = configparser.ConfigParser()
         config.read(ini_path)
 
-        oidc_issuer = env("OIDC_ISSUER", default="")
+        oidc_issuer = config.get("auth", "OIDC_ISSUER", fallback="")
 
         cls._instance = cls(
-            # Branding
+            # ── Branding ──────────────────────────────────────────────────────
             app_name=config.get(
                 "branding", "app_name", fallback="RetainerTracker"
             ),
@@ -101,14 +101,18 @@ class AppConfig:
             low_hours_threshold=config.getfloat(
                 "hours", "low_hours_threshold", fallback=75.0
             ),
-            # OIDC - only read credentials from env if issuer is actually set
+            # ── OIDC ──────────────────────────────────────────────────────────
             oidc_enabled=bool(oidc_issuer),
             oidc_issuer=oidc_issuer,
             oidc_client_id=(
-                env("OIDC_CLIENT_ID", default="") if oidc_issuer else ""
+                config.get("auth", "OIDC_CLIENT_ID", fallback="")
+                if oidc_issuer
+                else ""
             ),
             oidc_client_secret=(
-                env("OIDC_CLIENT_SECRET", default="") if oidc_issuer else ""
+                config.get("auth", "OIDC_CLIENT_SECRET", fallback="")
+                if oidc_issuer
+                else ""
             ),
             oidc_allowed_domains=tuple(
                 d.strip()

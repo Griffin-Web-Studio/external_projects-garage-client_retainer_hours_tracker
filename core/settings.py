@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(BASE_DIR / ".env")
 
 # Load app settings
-app_config: AppConfig = AppConfig.initialise(BASE_DIR / "settings.ini", _env)
+app_config: AppConfig = AppConfig.initialise(BASE_DIR / "settings.ini")
 
 
 # ────────────────────────────────────────────────────────────────| Security |──
