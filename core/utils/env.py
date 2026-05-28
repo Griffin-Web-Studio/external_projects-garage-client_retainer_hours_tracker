@@ -1,13 +1,13 @@
 from pathlib import Path
 
 
-def populate_secure_secret(base_dir: Path):
+def populate_secure_secret(env_path: Path):
     import secrets
     import string
 
-    _alphabet = string.ascii_letters + string.digits + "!@#^&*(-_=+)"
+    _alphabet = string.ascii_letters + string.digits + "!@/|\\^&*(-_=+)"
     SECRET_KEY = "".join(secrets.choice(_alphabet) for _ in range(50))
-    _ini_path = base_dir / ".env"
+    _ini_path = env_path
 
     with open(_ini_path, "r") as f:
         _contents = f.read()
