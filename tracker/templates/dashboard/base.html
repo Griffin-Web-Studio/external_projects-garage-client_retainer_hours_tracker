@@ -2,15 +2,125 @@
 
 {% block content %}
   {# Sidebar #}
-  <aside
-    class="fixed inset-y-0 z-30 left-0
-          flex flex-col w-56 border-r
-          bg-primary-alt border-white">
-    Aside
+  <aside class="fixed inset-y-0 z-30 left-0
+                flex flex-col w-56 border-r
+                bg-primary-alt border-secondary rounded-tr-4xl"
+  >
+    {# Logo #}
+    <div class="flex items-center justify-center py-5 px-5">
+      <a href="{% url 'dashboard' %}"
+        class="text-white hover:text-slate-200 transition-colors"
+      >
+        <span class="font-semibold tracking-tight">
+          {{ APP_NAME }}
+        </span>
+      </a>
+    </div>
+
+    {# Nav links #}
+    <nav class="flex-1 pt-5 pr-5 p-3 space-y-2 border-t rounded-tr-4xl
+                border-secondary"
+    >
+      <a href="{% url 'dashboard' %}"
+        class="flex items-center justify-between gap-3 px-3 py-2 text-sm
+                rounded-lg rounded-r-3xl
+                {% if request.resolver_match.url_name == 'dashboard' %}
+                  bg-secondary text-primary font-medium
+                {% else %}
+                  text-slate-400 hover:text-slate-200 hover:bg-white/5
+                {% endif %}
+                transition-colors"
+      >
+        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path opacity="0.5" d="M2 6.5C2 4.37868 2 3.31802 2.65901 2.65901C3.31802 2 4.37868 2 6.5 2C8.62132 2 9.68198 2 10.341 2.65901C11 3.31802 11 4.37868 11 6.5C11 8.62132 11 9.68198 10.341 10.341C9.68198 11 8.62132 11 6.5 11C4.37868 11 3.31802 11 2.65901 10.341C2 9.68198 2 8.62132 2 6.5Z" fill="currentColor"></path>
+          <path opacity="0.5" d="M13 17.5C13 15.3787 13 14.318 13.659 13.659C14.318 13 15.3787 13 17.5 13C19.6213 13 20.682 13 21.341 13.659C22 14.318 22 15.3787 22 17.5C22 19.6213 22 20.682 21.341 21.341C20.682 22 19.6213 22 17.5 22C15.3787 22 14.318 22 13.659 21.341C13 20.682 13 19.6213 13 17.5Z" fill="currentColor"></path>
+          <path d="M2 17.5C2 15.3787 2 14.318 2.65901 13.659C3.31802 13 4.37868 13 6.5 13C8.62132 13 9.68198 13 10.341 13.659C11 14.318 11 15.3787 11 17.5C11 19.6213 11 20.682 10.341 21.341C9.68198 22 8.62132 22 6.5 22C4.37868 22 3.31802 22 2.65901 21.341C2 20.682 2 19.6213 2 17.5Z" fill="currentColor"></path>
+          <path d="M13 6.5C13 4.37868 13 3.31802 13.659 2.65901C14.318 2 15.3787 2 17.5 2C19.6213 2 20.682 2 21.341 2.65901C22 3.31802 22 4.37868 22 6.5C22 8.62132 22 9.68198 21.341 10.341C20.682 11 19.6213 11 17.5 11C15.3787 11 14.318 11 13.659 10.341C13 9.68198 13 8.62132 13 6.5Z" fill="currentColor"></path>
+        </svg>
+        Dashboard
+      </a>
+
+      <a
+        href="{% url 'dashboard' %}"
+        class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg rounded-r-3xl text-sm
+                {% if request.resolver_match.url_name == 'yap' %}
+                  bg-secondary text-primary font-medium
+                {% else %}
+                  text-slate-200 hover:text-slate-400 hover:bg-white/5
+                {% endif %}
+                transition-colors"
+      >
+        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path opacity="0.5" d="M2 6.5C2 4.37868 2 3.31802 2.65901 2.65901C3.31802 2 4.37868 2 6.5 2C8.62132 2 9.68198 2 10.341 2.65901C11 3.31802 11 4.37868 11 6.5C11 8.62132 11 9.68198 10.341 10.341C9.68198 11 8.62132 11 6.5 11C4.37868 11 3.31802 11 2.65901 10.341C2 9.68198 2 8.62132 2 6.5Z" fill="currentColor"></path>
+          <path opacity="0.5" d="M13 17.5C13 15.3787 13 14.318 13.659 13.659C14.318 13 15.3787 13 17.5 13C19.6213 13 20.682 13 21.341 13.659C22 14.318 22 15.3787 22 17.5C22 19.6213 22 20.682 21.341 21.341C20.682 22 19.6213 22 17.5 22C15.3787 22 14.318 22 13.659 21.341C13 20.682 13 19.6213 13 17.5Z" fill="currentColor"></path>
+          <path d="M2 17.5C2 15.3787 2 14.318 2.65901 13.659C3.31802 13 4.37868 13 6.5 13C8.62132 13 9.68198 13 10.341 13.659C11 14.318 11 15.3787 11 17.5C11 19.6213 11 20.682 10.341 21.341C9.68198 22 8.62132 22 6.5 22C4.37868 22 3.31802 22 2.65901 21.341C2 20.682 2 19.6213 2 17.5Z" fill="currentColor"></path>
+          <path d="M13 6.5C13 4.37868 13 3.31802 13.659 2.65901C14.318 2 15.3787 2 17.5 2C19.6213 2 20.682 2 21.341 2.65901C22 3.31802 22 4.37868 22 6.5C22 8.62132 22 9.68198 21.341 10.341C20.682 11 19.6213 11 17.5 11C15.3787 11 14.318 11 13.659 10.341C13 9.68198 13 8.62132 13 6.5Z" fill="currentColor"></path>
+        </svg>
+        Dashboard
+      </a>
+    </nav>
+
+    {# User / sign out #}
+    <div class="p-3 border-t border-secondary rounded-tr-4xl">
+      <div class="px-3 py-1.5 mb-1">
+        <p class="text-xs text-slate-100 truncate font-medium">
+          {{ user.name }}
+        </p>
+
+        <p class="text-xs text-slate-400 truncate">
+          {{ user.email }}
+        </p>
+      </div>
+
+      <form method="post" action="{% url 'logout' %}">
+
+        {% csrf_token %}
+
+        <button type="submit"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg
+                      text-sm
+                      text-slate-400 hover:text-slate-200 hover:bg-white/5
+                      transition-colors"
+        >
+          <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path opacity="0.5" d="M15.9998 2L14.9998 2C12.1714 2 10.7576 2.00023 9.87891 2.87891C9.00023 3.75759 9.00023 5.1718 9.00023 8.00023L9.00023 16.0002C9.00023 18.8287 9.00023 20.2429 9.87891 21.1215C10.7574 22 12.1706 22 14.9976 22L14.9998 22L15.9998 22C18.8282 22 20.2424 22 21.1211 21.1213C21.9998 20.2426 21.9998 18.8284 21.9998 16L21.9998 8L21.9998 7.99998C21.9998 5.17157 21.9998 3.75736 21.1211 2.87868C20.2424 2 18.8282 2 15.9998 2Z" fill="currentColor"></path>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M15.75 12C15.75 11.5858 15.4142 11.25 15 11.25L4.02744 11.25L5.98809 9.56943C6.30259 9.29986 6.33901 8.82639 6.06944 8.51189C5.79988 8.1974 5.3264 8.16098 5.01191 8.43054L1.51191 11.4305C1.34567 11.573 1.25 11.781 1.25 12C1.25 12.2189 1.34567 12.4269 1.51191 12.5694L5.01191 15.5694C5.3264 15.839 5.79988 15.8026 6.06944 15.4881C6.33901 15.1736 6.30259 14.7001 5.98809 14.4305L4.02744 12.75L15 12.75C15.4142 12.75 15.75 12.4142 15.75 12Z" fill="currentColor"></path>
+          </svg>
+          Sign out
+        </button>
+      </form>
+    </div>
   </aside>
 
   {# Main content #}
   <main class="pl-56 min-h-screen">
-    {% block view_body %}{% endblock %}
+    <div class="max-w-6xl mx-auto px-8 py-8">
+
+      {% if messages %}
+
+        <div class="mb-6 space-y-2">
+
+          {# TODO: Test messages layout #}
+          {% for message in messages %}
+
+            <div class="px-4 py-2.5 rounded-xl text-sm
+              {% if message.tags == 'error' %}
+                bg-red-500/10 border border-red-500/20 text-red-400
+              {% else %}
+                bg-emerald-500/10 border border-emerald-500/20
+                text-emerald-400
+              {% endif %}"
+          >
+              {{ message }}
+            </div>
+
+          {% endfor %}
+
+        </div>
+
+      {% endif %}
+
+      {% block view_body %}{% endblock %}
+    </div>
   </main>
 {% endblock %}
