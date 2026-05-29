@@ -2,9 +2,9 @@
 
 {% block content %}
   {# Sidebar #}
-  <aside class="fixed inset-y-0 z-30 left-0
-                flex flex-col w-56 border-r
-                bg-primary-alt border-secondary rounded-tr-4xl"
+  <aside class="fixed inset-y-0 z-30 left-0 m-2
+                flex flex-col w-56 border-r rounded-xl rounded-tr-4xl
+                bg-primary-alt border-secondary"
   >
     {# Logo #}
     <div class="flex items-center justify-center py-5 px-5">
@@ -22,8 +22,8 @@
                 border-secondary"
     >
       <a href="{% url 'dashboard' %}"
-        class="flex items-center justify-between gap-3 px-3 py-2 text-sm
-                rounded-lg rounded-r-3xl
+        class="flex items-center justify-between gap-3 px-4 py-2 text-sm
+                rounded-3xl
                 {% if request.resolver_match.url_name == 'dashboard' %}
                   bg-secondary text-primary font-medium
                 {% else %}
@@ -42,7 +42,8 @@
 
       <a
         href="{% url 'dashboard' %}"
-        class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg rounded-r-3xl text-sm
+        class="flex items-center justify-between gap-3 px-4 py-2 text-sm
+                rounded-3xl
                 {% if request.resolver_match.url_name == 'yap' %}
                   bg-secondary text-primary font-medium
                 {% else %}
@@ -77,9 +78,10 @@
         {% csrf_token %}
 
         <button type="submit"
-                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg
-                      text-sm
-                      text-slate-400 hover:text-slate-200 hover:bg-white/5
+                class="w-full flex items-center justify-between gap-3 px-4 py-2
+                      text-sm cursor-pointer border rounded-3xl
+                      text-white hover:text-slate-200 hover:bg-white/5
+                      border-secondary
                       transition-colors"
         >
           <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
