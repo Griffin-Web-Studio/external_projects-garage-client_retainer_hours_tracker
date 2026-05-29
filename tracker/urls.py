@@ -6,4 +6,5 @@ urlpatterns = [
     path(
         "attributions/", views.AttributionsView.as_view(), name="attributions"
     ),
+    path("dashboard/", views.DashboardView.as_view(), name="dashboard"),
 ]
