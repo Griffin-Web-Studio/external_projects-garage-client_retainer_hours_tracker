@@ -50,6 +50,10 @@
           // Files listed below should be ignored through .gitignore, and
           // shouldn't be expected to be editable by a developer
           ".claude-sessions/": true,
+          ".*_cache": true,
+          ".pnpm-store": true,
+          "node_modules": true,
+          ".venv": true,
           "**/__pycache__": true
         },
         "files.insertFinalNewline": true,
