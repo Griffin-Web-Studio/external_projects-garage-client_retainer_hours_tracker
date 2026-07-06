@@ -47,6 +47,9 @@
         "python.testing.pytestEnabled": true,
         "python.testing.unittestEnabled": false,
         "files.exclude": {
+          // Files listed below should be ignored through .gitignore, and
+          // shouldn't be expected to be editable by a developer
+          ".claude-sessions/": true,
           "**/__pycache__": true
         },
         "files.insertFinalNewline": true,
@@ -78,7 +81,8 @@
   "remoteEnv": {
     // prevent corepack from asking to install yarn at container post create
     //   script
-    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
+    "CLAUDE_CONFIG_DIR": "${containerWorkspaceFolder}/.claude-sessions"
   },
   // Permit providing extra envvars to devcontainer
   "runArgs": [
