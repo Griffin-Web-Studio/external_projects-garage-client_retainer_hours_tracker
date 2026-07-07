@@ -1,0 +1,473 @@
+{% extends "dashboard/base.html" %}
+{% load hours_tags %}
+
+{% block title %}{{ client.name }} - {{ APP_NAME }}{% endblock %}
+
+{% block view_body %}
+  <div class="space-y-8">
+
+    {# Header #}
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <a href="{% url 'dashboard' %}"
+           class="text-slate-400 hover:text-slate-200 text-sm
+                  transition-colors"
+        >
+          &larr; Dashboard
+        </a>
+
+        <h1 class="text-2xl font-semibold text-white mt-1">
+          {{ client.name }}
+        </h1>
+
+        {% if term %}
+          <p class="text-sm text-slate-400 mt-0.5">
+            Term {{ term.term_number }} - {{ term.start_date|date:"j M Y" }}
+            &ndash; {{ term.end_date|date:"j M Y" }}
+            {% if client.terms.count > 1 %}
+              - {{ client.terms.count }} terms total
+            {% endif %}
+          </p>
+        {% endif %}
+
+        {% if client.notes %}
+          <p class="text-sm text-slate-500 mt-1 italic">{{ client.notes }}</p>
+        {% endif %}
+      </div>
+
+      {% if term %}
+        <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          {% if not is_active_term %}
+            <a href="/clients/{{ client.pk }}/new-term/"
+               class="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20
+                      border border-amber-500/20 text-amber-300 text-sm
+                      font-medium rounded-full transition-colors"
+            >
+              Renew Term
+            </a>
+          {% endif %}
+
+          <a href="{% url 'log-time' client.pk %}"
+             class="px-4 py-2 bg-secondary hover:bg-secondary-alt
+                    text-primary text-sm font-medium rounded-full
+                    transition-colors"
+          >
+            Log Time
+          </a>
+
+          <a href="{% url 'client-edit' client.pk %}"
+             class="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300
+                    text-sm rounded-full transition-colors"
+          >
+            Edit
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if not term %}
+      <p class="text-slate-400">No term found for this client.</p>
+    {% else %}
+
+      {# Hours stat cards (active) #}
+      {% if is_active_term %}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white/5 border border-secondary/20 rounded-2xl p-4">
+            <p class="text-xs text-slate-400 mb-1">Remaining (Support)</p>
+            <p class="font-mono text-2xl font-semibold text-white">
+              {{ summary.remaining_support|clamp|fmt_hours }}
+            </p>
+            {% if summary.support_overage > 0 %}
+              <p class="text-xs text-red-400 mt-1">
+                {{ summary.support_overage|fmt_hours }} overage
+              </p>
+            {% endif %}
+          </div>
+
+          <div class="bg-white/5 border border-secondary/20 rounded-2xl p-4">
+            <p class="text-xs text-slate-400 mb-1">Used this term</p>
+            <p class="font-mono text-2xl font-semibold text-white">
+              {{ summary.total_support_used|fmt_hours }}
+            </p>
+            <p class="text-xs text-slate-500 mt-1">
+              of {{ summary.total_support_allocated|fmt_hours }} allocated
+            </p>
+          </div>
+
+          <div class="bg-white/5 border border-secondary/20 rounded-2xl p-4">
+            <p class="text-xs text-slate-400 mb-1">Monthly allocation</p>
+            <p class="font-mono text-2xl font-semibold text-white">
+              {{ summary.monthly_allocation|fmt_hours }}
+            </p>
+            <p class="text-xs text-slate-500 mt-1">
+              Month {{ summary.months_elapsed }} of 12
+            </p>
+          </div>
+
+          {% if summary.total_dev_available > 0 %}
+            <div class="bg-white/5 border border-secondary/20 rounded-2xl
+                        p-4"
+            >
+              <p class="text-xs text-slate-400 mb-1">Dev hours remaining</p>
+              <p class="font-mono text-2xl font-semibold text-white">
+                {{ summary.remaining_dev|clamp|fmt_hours }}
+              </p>
+              {% if summary.dev_overage > 0 %}
+                <p class="text-xs text-red-400 mt-1">
+                  {{ summary.dev_overage|fmt_hours }} overage
+                </p>
+              {% else %}
+                <p class="text-xs text-slate-500 mt-1">
+                  of {{ summary.total_dev_available|fmt_hours }}
+                </p>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="bg-white/5 border border-secondary/20 rounded-2xl
+                        p-4 flex items-center justify-center"
+            >
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                          {{ summary.hours_status|status_badge_classes }}"
+              >
+                {{ summary.hours_status|status_label }}
+              </span>
+            </div>
+          {% endif %}
+        </div>
+
+        {# Hours progress bar #}
+        <div class="bg-white/5 border border-secondary/20 rounded-2xl p-5">
+          <div class="flex justify-between text-xs text-slate-400 mb-2">
+            <span>
+              Support usage - month {{ summary.months_elapsed }} of 12
+            </span>
+            <span class="font-mono">
+              {{ summary.support_used_pct|floatformat_pct }}%
+            </span>
+          </div>
+          <div class="h-1.5 rounded-full overflow-hidden bg-white/10">
+            <div class="h-full rounded-full transition-all
+                        {{ summary.hours_status|hours_bar_color }}"
+                 style="width: {{ summary.support_used_pct|floatformat_pct }}%"
+            ></div>
+          </div>
+        </div>
+      {% endif %}
+
+      {# Expired term notice #}
+      {% if not is_active_term %}
+        <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl
+                    p-5"
+        >
+          <h3 class="text-amber-300 font-medium mb-3">Term Ended</h3>
+          <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+            <div>
+              <p class="text-slate-400 text-xs">Support used</p>
+              <p class="text-white font-mono">
+                {{ summary.total_support_used|fmt_hours }} /
+                {{ summary.total_support_allocated|fmt_hours }}
+              </p>
+            </div>
+
+            {% if summary.support_overage > 0 %}
+              <div>
+                <p class="text-slate-400 text-xs">Support overage</p>
+                <p class="text-red-400 font-mono">
+                  {{ summary.support_overage|fmt_hours }}
+                </p>
+              </div>
+            {% endif %}
+
+            <div>
+              <p class="text-slate-400 text-xs">Available to carry over</p>
+              <p class="text-amber-300 font-mono">
+                {{ summary.remaining_support_for_carryover|fmt_hours }}
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-amber-500/10 text-xs
+                      text-slate-400 space-y-1"
+          >
+            <p>On renewal:</p>
+            <p>
+              &rarr; <span class="text-white">Convert:</span>
+              {{ summary.remaining_support_for_carryover|fmt_hours }} support
+              &rarr;
+              <span class="font-mono text-secondary">
+                {{ conv_dev_hours|fmt_hours }} dev hours
+              </span>
+            </p>
+            <p>
+              &rarr; <span class="text-white">Migrate:</span>
+              carry
+              <span class="font-mono text-secondary">
+                {{ mig_sup_hours|fmt_hours }}
+              </span>
+              support hours forward (max {{ max_migrate }}h)
+            </p>
+          </div>
+        </div>
+      {% endif %}
+
+      {# Unbilled overage #}
+      {% if has_overage %}
+        <div class="bg-red-500/10 border border-red-500/20 rounded-2xl p-5
+                    space-y-4"
+        >
+          <h3 class="text-red-300 font-medium">Unbilled Overage</h3>
+
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            {% if unbilled_s > 0 %}
+              <div>
+                <p class="text-slate-400 text-xs">Support - unbilled</p>
+                <p class="text-red-300 font-mono font-semibold">
+                  {{ unbilled_s|fmt_hours }}
+                </p>
+                {% if billed_s > 0 %}
+                  <p class="text-slate-500 text-xs">
+                    {{ billed_s|fmt_hours }} already billed
+                  </p>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            {% if unbilled_d > 0 %}
+              <div>
+                <p class="text-slate-400 text-xs">Development - unbilled</p>
+                <p class="text-red-300 font-mono font-semibold">
+                  {{ unbilled_d|fmt_hours }}
+                </p>
+                {% if billed_d > 0 %}
+                  <p class="text-slate-500 text-xs">
+                    {{ billed_d|fmt_hours }} already billed
+                  </p>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+
+          {# Bill overage form #}
+          <form method="post" action="/clients/{{ client.pk }}/bill-overage/"
+                class="space-y-3 pt-2 border-t border-red-500/10"
+          >
+            {% csrf_token %}
+
+            {% if bill_form.errors %}
+              <p class="text-red-400 text-xs">
+                Please correct the errors below.
+              </p>
+            {% endif %}
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="block text-xs text-slate-400 uppercase
+                              tracking-wider"
+                >
+                  Type
+                </label>
+                {{ bill_form.type }}
+              </div>
+              <div class="space-y-1">
+                <label class="block text-xs text-slate-400 uppercase
+                              tracking-wider"
+                >
+                  Hours to Bill
+                </label>
+                {{ bill_form.hours_charged }}
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="block text-xs text-slate-400 uppercase
+                              tracking-wider"
+                >
+                  Invoice Ref
+                </label>
+                {{ bill_form.invoice_ref }}
+              </div>
+              <div class="space-y-1">
+                <label class="block text-xs text-slate-400 uppercase
+                              tracking-wider"
+                >
+                  Notes
+                </label>
+                {{ bill_form.notes }}
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button type="submit"
+                      class="px-4 py-2 bg-red-600 hover:bg-red-700
+                            text-white text-sm font-medium rounded-full
+                            transition-colors"
+              >
+                Record Billing
+              </button>
+            </div>
+          </form>
+        </div>
+      {% endif %}
+
+      {# Billing history #}
+      {% if billings %}
+        <section class="space-y-3">
+          <h2 class="text-sm font-medium text-slate-400 uppercase
+                     tracking-wider"
+          >
+            Billing History
+          </h2>
+
+          <div class="bg-white/5 border border-secondary/20 rounded-2xl
+                      overflow-hidden"
+          >
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white/10 text-xs text-slate-400
+                           uppercase tracking-wider"
+                >
+                  <th class="px-4 py-3 text-left font-medium">Date</th>
+                  <th class="px-4 py-3 text-left font-medium">Type</th>
+                  <th class="px-4 py-3 text-left font-medium">Hours</th>
+                  <th class="px-4 py-3 text-left font-medium">
+                    Invoice Ref
+                  </th>
+                  <th class="px-4 py-3 text-left font-medium">Notes</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                {% for b in billings %}
+                  <tr>
+                    <td class="px-4 py-3 text-slate-400">
+                      {{ b.billed_at|date:"j M Y" }}
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="text-xs px-1.5 py-0.5 rounded
+                                  {{ b.type|entry_type_classes }}"
+                      >
+                        {{ b.type }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 font-mono font-medium text-white">
+                      {{ b.hours_charged|fmt_hours }}
+                    </td>
+                    <td class="px-4 py-3 text-slate-400">
+                      {{ b.invoice_ref|default:"-" }}
+                    </td>
+                    <td class="px-4 py-3 text-slate-400">
+                      {{ b.notes|default:"-" }}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      {% endif %}
+
+      {# Time entries #}
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-medium text-slate-400 uppercase
+                     tracking-wider"
+          >
+            Time Entries
+          </h2>
+          <a href="{% url 'log-time' client.pk %}"
+             class="text-xs text-secondary hover:text-secondary-alt
+                    transition-colors"
+          >
+            + Log time
+          </a>
+        </div>
+
+        {% if not entries %}
+          <div class="bg-white/5 border border-secondary/20 rounded-2xl p-8
+                      text-center text-slate-500 text-sm"
+          >
+            No time entries yet for this term.
+          </div>
+        {% else %}
+          <div class="bg-white/5 border border-secondary/20 rounded-2xl
+                      overflow-hidden"
+          >
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white/10 text-xs text-slate-400
+                           uppercase tracking-wider"
+                >
+                  <th class="px-4 py-3 text-left font-medium">Date</th>
+                  <th class="px-4 py-3 text-left font-medium">Type</th>
+                  <th class="px-4 py-3 text-left font-medium">Hours</th>
+                  <th class="px-4 py-3 text-left font-medium">
+                    Description
+                  </th>
+                  <th class="px-4 py-3 text-left font-medium">Employee</th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                {% for entry in entries %}
+                  <tr class="hover:bg-white/5">
+                    <td class="px-4 py-3 text-slate-400 whitespace-nowrap">
+                      {{ entry.date|date:"j M Y" }}
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="text-xs px-1.5 py-0.5 rounded
+                                  {{ entry.type|entry_type_classes }}"
+                      >
+                        {{ entry.type }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 font-mono font-medium text-white">
+                      {{ entry.hours|fmt_hours }}
+                    </td>
+                    <td class="px-4 py-3 text-slate-300 max-w-xs truncate">
+                      {{ entry.description }}
+                    </td>
+                    <td class="px-4 py-3 text-slate-400">
+                      {{ entry.employee.name }}
+                    </td>
+                    <td class="px-4 py-3">
+                      <form method="post"
+                            action="/time-entries/{{ entry.pk }}/delete/"
+                            onsubmit="return confirm('Delete this entry?')"
+                      >
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="text-slate-600 hover:text-red-400
+                                      transition-colors text-xs"
+                                title="Delete"
+                        >
+                          &#10005;
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </section>
+
+      {# Danger zone #}
+      <section class="pt-4 border-t border-white/5">
+        <form method="post" action="{% url 'client-delete' client.pk %}"
+              onsubmit="return confirm('Permanently delete {{ client.name }} and all their data?')"
+        >
+          {% csrf_token %}
+          <button type="submit"
+                  class="text-xs text-slate-600 hover:text-red-400
+                        transition-colors"
+          >
+            Delete client
+          </button>
+        </form>
+      </section>
+
+    {% endif %}{# end if term #}
+
+  </div>
+{% endblock %}

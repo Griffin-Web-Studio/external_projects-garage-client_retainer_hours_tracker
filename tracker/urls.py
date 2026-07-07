@@ -32,4 +32,9 @@ urlpatterns = [
         login_required(views.LogTimeView.as_view()),
         name="log-time",
     ),
+    path(
+        "clients/<int:pk>/",
+        login_required(views.ClientDetailView.as_view()),
+        name="client-detail",
+    ),
 ]
