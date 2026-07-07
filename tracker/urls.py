@@ -27,4 +27,9 @@ urlpatterns = [
         login_required(views.DeleteClientView.as_view()),
         name="client-delete",
     ),
+    path(
+        "clients/<int:pk>/log/",
+        login_required(views.LogTimeView.as_view()),
+        name="log-time",
+    ),
 ]

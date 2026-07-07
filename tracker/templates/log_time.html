@@ -1,0 +1,116 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Log Time - {{ client.name }} - {{ APP_NAME }}{% endblock %}
+
+{% block view_body %}
+  <div class="max-w-lg space-y-6">
+    <div>
+      <a href="{{ back_url }}"
+         class="text-slate-400 hover:text-slate-200 text-sm
+                transition-colors"
+      >
+        &larr; {{ client.name }}
+      </a>
+
+      <h1 class="text-2xl font-semibold text-white mt-2">Log Time</h1>
+
+      {% if term %}
+        <p class="text-sm text-slate-400 mt-0.5">
+          Term {{ term.term_number }} - {{ term.start_date|date:"j M Y" }}
+          &ndash; {{ term.end_date|date:"j M Y" }}
+        </p>
+      {% endif %}
+    </div>
+
+    {% if not term %}
+      <p class="text-amber-300 text-sm bg-amber-500/10 border
+                border-amber-500/20 rounded-xl px-4 py-3"
+      >
+        No active term found. Please renew this client's term first.
+      </p>
+    {% else %}
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+
+        <div class="bg-white/5 border border-secondary/20 rounded-2xl p-6
+                    space-y-5"
+        >
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="block text-xs font-medium text-slate-400
+                            uppercase tracking-wider"
+              >
+                Date <span class="text-secondary">*</span>
+              </label>
+
+              {{ form.date }}
+
+              {% for error in form.date.errors %}
+                <p class="text-xs text-red-400">{{ error }}</p>
+              {% endfor %}
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="block text-xs font-medium text-slate-400
+                            uppercase tracking-wider"
+              >
+                Hours <span class="text-secondary">*</span>
+              </label>
+
+              {{ form.hours }}
+
+              {% for error in form.hours.errors %}
+                <p class="text-xs text-red-400">{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-xs font-medium text-slate-400
+                          uppercase tracking-wider"
+            >
+              Type <span class="text-secondary">*</span>
+            </label>
+
+            {{ form.type }}
+
+            {% for error in form.type.errors %}
+              <p class="text-xs text-red-400">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-xs font-medium text-slate-400
+                          uppercase tracking-wider"
+            >
+              Description <span class="text-secondary">*</span>
+            </label>
+
+            {{ form.description }}
+
+            {% for error in form.description.errors %}
+              <p class="text-xs text-red-400">{{ error }}</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3">
+          <a href="{{ back_url }}"
+             class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200
+                    transition-colors"
+          >
+            Cancel
+          </a>
+
+          <button type="submit"
+                  class="px-4 py-2 bg-secondary hover:bg-secondary-alt
+                        text-primary text-sm font-medium rounded-full
+                        transition-colors"
+          >
+            Log Entry
+          </button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+{% endblock %}
