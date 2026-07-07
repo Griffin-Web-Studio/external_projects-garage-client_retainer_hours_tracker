@@ -42,4 +42,9 @@ urlpatterns = [
         login_required(views.DeleteTimeEntryView.as_view()),
         name="delete-time-entry",
     ),
+    path(
+        "clients/<int:pk>/new-term/",
+        login_required(views.NewTermView.as_view()),
+        name="new-term",
+    ),
 ]

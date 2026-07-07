@@ -1,0 +1,165 @@
+{% extends "dashboard/base.html" %}
+{% load hours_tags %}
+
+{% block title %}Renew Term - {{ client.name }} - {{ APP_NAME }}{% endblock %}
+
+{% block view_body %}
+  <div class="max-w-lg space-y-6">
+    <div>
+      <a href="{% url 'client-detail' client.pk %}"
+         class="text-slate-400 hover:text-slate-200 text-sm
+                transition-colors"
+      >
+        &larr; {{ client.name }}
+      </a>
+
+      <h1 class="text-2xl font-semibold text-white mt-2">Renew Term</h1>
+
+      <p class="text-sm text-slate-400 mt-0.5">
+        Starting term {{ term.term_number|add:1 }}
+      </p>
+    </div>
+
+    {# Previous term summary #}
+    <div class="bg-white/5 border border-secondary/20 rounded-2xl p-5
+                space-y-4"
+    >
+      <h2 class="text-sm font-medium text-slate-300">
+        Previous Term Summary
+      </h2>
+
+      <div class="grid grid-cols-3 gap-4 text-sm">
+        <div>
+          <p class="text-xs text-slate-400 mb-0.5">Total allocated</p>
+          <p class="font-mono font-semibold text-white">
+            {{ summary.total_support_allocated|fmt_hours }}
+          </p>
+        </div>
+        <div>
+          <p class="text-xs text-slate-400 mb-0.5">Total used</p>
+          <p class="font-mono font-semibold text-white">
+            {{ summary.total_support_used|fmt_hours }}
+          </p>
+        </div>
+        <div>
+          <p class="text-xs text-slate-400 mb-0.5">Remaining</p>
+          <p class="font-mono font-semibold text-amber-300">
+            {{ remaining|fmt_hours }}
+          </p>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-white/10 space-y-3">
+        <p class="text-xs text-slate-400 uppercase tracking-wider
+                  font-medium"
+        >
+          Carryover options
+        </p>
+
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div class="bg-secondary/10 border border-secondary/20
+                      rounded-xl p-4"
+          >
+            <p class="text-secondary font-medium mb-1">Convert to Dev</p>
+            <p class="text-slate-400 text-xs mb-2">
+              {{ remaining|fmt_hours }} &divide; 2 =
+              <span class="text-white font-mono">
+                {{ conv_dev_hours|fmt_hours }}
+              </span>
+              dev hours
+            </p>
+            <p class="text-slate-500 text-xs">
+              Available alongside normal monthly support.
+            </p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+            <p class="text-slate-200 font-medium mb-1">Migrate Support</p>
+            <p class="text-slate-400 text-xs mb-2">
+              Carry
+              <span class="text-white font-mono">
+                {{ mig_sup_hours|fmt_hours }}
+              </span>
+              forward
+              {% if remaining > max_migrate %}
+                <span class="text-amber-400">
+                  (capped at {{ max_migrate }}h)
+                </span>
+              {% endif %}
+            </p>
+            <p class="text-slate-500 text-xs">
+              Added to the opening balance of the new term.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Form #}
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+
+      <div class="bg-white/5 border border-secondary/20 rounded-2xl p-6
+                  space-y-5"
+      >
+        {% if form.errors %}
+          <div class="bg-red-500/10 border border-red-500/20 text-red-400
+                      text-sm rounded-lg px-3 py-2"
+          >
+            Please correct the errors below.
+          </div>
+        {% endif %}
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-medium text-slate-400
+                        uppercase tracking-wider"
+          >
+            Carryover Option <span class="text-secondary">*</span>
+          </label>
+
+          {{ form.carry_over_type }}
+
+          {% for error in form.carry_over_type.errors %}
+            <p class="text-xs text-red-400">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-medium text-slate-400
+                        uppercase tracking-wider"
+          >
+            Monthly Support Hours (New Term)
+            <span class="text-secondary">*</span>
+          </label>
+
+          {{ form.monthly_hours }}
+
+          <p class="text-xs text-slate-500">
+            Can differ from the previous term if the contract was
+            renegotiated.
+          </p>
+
+          {% for error in form.monthly_hours.errors %}
+            <p class="text-xs text-red-400">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3">
+        <a href="{% url 'client-detail' client.pk %}"
+           class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200
+                  transition-colors"
+        >
+          Cancel
+        </a>
+
+        <button type="submit"
+                class="px-4 py-2 bg-secondary hover:bg-secondary-alt
+                      text-primary text-sm font-medium rounded-full
+                      transition-colors"
+        >
+          Start New Term
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock %}
