@@ -17,4 +17,9 @@ urlpatterns = [
         login_required(views.NewClientView.as_view()),
         name="client-new",
     ),
+    path(
+        "clients/<int:pk>/edit/",
+        login_required(views.EditClientView.as_view()),
+        name="client-edit",
+    ),
 ]
