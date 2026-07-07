@@ -1,0 +1,72 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ title }} - {{ APP_NAME }}{% endblock %}
+
+{% block view_body %}
+  <div class="max-w-lg space-y-6">
+    <div>
+      <a href="{{ back_url }}"
+         class="text-slate-400 hover:text-slate-200 text-sm
+                transition-colors"
+      >
+        &larr; Back
+      </a>
+
+      <h1 class="text-2xl font-semibold text-white mt-2">{{ title }}</h1>
+
+      {% if not client %}
+        <p class="text-sm text-slate-400 mt-0.5">
+          Creates the client and their first {{ term_months }}-month term.
+        </p>
+      {% endif %}
+    </div>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+
+      <div class="bg-white/5 border border-secondary/20 rounded-2xl p-6
+                  space-y-5"
+      >
+        {% for field in form %}
+          <div class="space-y-1.5">
+            <label class="block text-xs font-medium text-slate-400
+                          uppercase tracking-wider"
+            >
+              {{ field.label }}
+              {% if field.field.required %}
+                <span class="text-secondary">*</span>
+              {% endif %}
+            </label>
+
+            {{ field }}
+
+            {% if field.help_text %}
+              <p class="text-xs text-slate-500">{{ field.help_text }}</p>
+            {% endif %}
+
+            {% for error in field.errors %}
+              <p class="text-xs text-red-400">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="flex items-center justify-end gap-3">
+        <a href="{{ back_url }}"
+           class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200
+                  transition-colors"
+        >
+          Cancel
+        </a>
+
+        <button type="submit"
+                class="px-4 py-2 bg-secondary hover:bg-secondary-alt
+                      text-primary text-sm font-medium rounded-full
+                      transition-colors"
+        >
+          {% if client %}Save Changes{% else %}Create Client{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

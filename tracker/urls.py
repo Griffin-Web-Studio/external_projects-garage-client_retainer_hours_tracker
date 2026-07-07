@@ -12,4 +12,9 @@ urlpatterns = [
         login_required(views.DashboardView.as_view()),
         name="dashboard",
     ),
+    path(
+        "clients/new/",
+        login_required(views.NewClientView.as_view()),
+        name="client-new",
+    ),
 ]

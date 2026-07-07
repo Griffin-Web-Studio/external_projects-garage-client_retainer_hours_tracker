@@ -9,6 +9,7 @@ whatever values you need - no Django dependency required.
 
 from __future__ import annotations
 
+import calendar
 from dataclasses import dataclass
 from datetime import date
 from typing import Literal, Union
@@ -101,6 +102,27 @@ def get_dev_conversion_ratio() -> float:
 
 
 # ─────────────────────────────────────────────────────────────────| Helpers |──
+
+
+def add_months(d: date, months: int) -> date:
+    """Adds calendar months to a date, clamping to the target month's length.
+
+    Args:
+        d (date): Starting date.
+        months (int): Number of calendar months to add.
+
+    Returns:
+        date: `d` shifted forward by `months` months. If `d.day` doesn't
+            exist in the target month (e.g. 31 Jan + 1 month), it's
+            clamped to that month's last day.
+    """
+
+    total = d.month - 1 + months
+    year = d.year + total // 12
+    month = total % 12 + 1
+    day = min(d.day, calendar.monthrange(year, month)[1])
+
+    return d.replace(year=year, month=month, day=day)
 
 
 def _months_between(start: date, end: date) -> int:
