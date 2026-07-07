@@ -33,9 +33,6 @@ class AppConfig:
     # ────────────────────────────────────────────────────────────| Branding |──
     app_name: str
 
-    # ── Database ──────────────────────────────────────────────────────────────
-    db_name: str
-
     # ──────────────────────────────────────────────| Hours / business rules |──
     term_months: int
     dev_conversion_ratio: float
@@ -100,8 +97,6 @@ class AppConfig:
             app_name=config.get(
                 "branding", "app_name", fallback="RetainerTracker"
             ),
-            # ── Database ──────────────────────────────────────────────────────
-            db_name=config.get("db", "DB_NAME", fallback="db.sqlite3"),
             # ── Hours / business rules ────────────────────────────────────────
             term_months=config.getint("hours", "term_months", fallback=12),
             dev_conversion_ratio=config.getfloat(
@@ -171,6 +166,8 @@ class AppEnv:
     allowed_hosts: list[str]
     static_url: str
     default_from_email: str
+    db_name: str
+    db_dir: str  # blank = BASE_DIR (e.g. a mounted volume in containers)
 
     # ───────────────────────────────────────────────────────────| Singleton |──
     # ClassVar fields are excluded from __init__ / __hash__ by the dataclass
@@ -226,5 +223,7 @@ class AppEnv:
             default_from_email=env(
                 "DEFAULT_FROM_EMAIL", default="local@localhost"
             ),
+            db_name=env("DB_NAME", default="db.sqlite3"),
+            db_dir=env("DB_DIR", default=""),
         )
         return cls._instance
