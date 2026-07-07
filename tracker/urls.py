@@ -22,4 +22,9 @@ urlpatterns = [
         login_required(views.EditClientView.as_view()),
         name="client-edit",
     ),
+    path(
+        "clients/<int:pk>/delete/",
+        login_required(views.DeleteClientView.as_view()),
+        name="client-delete",
+    ),
 ]
