@@ -6,3 +6,4 @@ from .EditClientView import EditClientView
 from .DeleteClientView import DeleteClientView
 from .LogTimeView import LogTimeView
 from .ClientDetailView import ClientDetailView
+from .DeleteTimeEntryView import DeleteTimeEntryView

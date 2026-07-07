@@ -431,7 +431,7 @@
                     </td>
                     <td class="px-4 py-3">
                       <form method="post"
-                            action="/time-entries/{{ entry.pk }}/delete/"
+                            action="{% url 'delete-time-entry' entry.pk %}"
                             onsubmit="return confirm('Delete this entry?')"
                       >
                         {% csrf_token %}

@@ -37,4 +37,9 @@ urlpatterns = [
         login_required(views.ClientDetailView.as_view()),
         name="client-detail",
     ),
+    path(
+        "time-entries/<int:pk>/delete/",
+        login_required(views.DeleteTimeEntryView.as_view()),
+        name="delete-time-entry",
+    ),
 ]
