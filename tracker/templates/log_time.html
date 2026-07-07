@@ -37,7 +37,8 @@
         >
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="block text-xs font-medium text-slate-400
+              <label for="{{ form.date.id_for_label }}"
+                     class="block text-xs font-medium text-slate-400
                             uppercase tracking-wider"
               >
                 Date <span class="text-secondary">*</span>
@@ -51,7 +52,8 @@
             </div>
 
             <div class="space-y-1.5">
-              <label class="block text-xs font-medium text-slate-400
+              <label for="{{ form.hours.id_for_label }}"
+                     class="block text-xs font-medium text-slate-400
                             uppercase tracking-wider"
               >
                 Hours <span class="text-secondary">*</span>
@@ -66,7 +68,8 @@
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-medium text-slate-400
+            <label for="{{ form.type.id_for_label }}"
+                   class="block text-xs font-medium text-slate-400
                           uppercase tracking-wider"
             >
               Type <span class="text-secondary">*</span>
@@ -80,7 +83,8 @@
           </div>
 
           <div class="space-y-1.5">
-            <label class="block text-xs font-medium text-slate-400
+            <label for="{{ form.description.id_for_label }}"
+                   class="block text-xs font-medium text-slate-400
                           uppercase tracking-wider"
             >
               Description <span class="text-secondary">*</span>

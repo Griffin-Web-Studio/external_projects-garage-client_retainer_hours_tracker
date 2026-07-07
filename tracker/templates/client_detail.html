@@ -261,7 +261,8 @@
 
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1">
-                <label class="block text-xs text-slate-400 uppercase
+                <label for="{{ bill_form.type.id_for_label }}"
+                       class="block text-xs text-slate-400 uppercase
                               tracking-wider"
                 >
                   Type
@@ -269,7 +270,8 @@
                 {{ bill_form.type }}
               </div>
               <div class="space-y-1">
-                <label class="block text-xs text-slate-400 uppercase
+                <label for="{{ bill_form.hours_charged.id_for_label }}"
+                       class="block text-xs text-slate-400 uppercase
                               tracking-wider"
                 >
                   Hours to Bill
@@ -280,7 +282,8 @@
 
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1">
-                <label class="block text-xs text-slate-400 uppercase
+                <label for="{{ bill_form.invoice_ref.id_for_label }}"
+                       class="block text-xs text-slate-400 uppercase
                               tracking-wider"
                 >
                   Invoice Ref
@@ -288,7 +291,8 @@
                 {{ bill_form.invoice_ref }}
               </div>
               <div class="space-y-1">
-                <label class="block text-xs text-slate-400 uppercase
+                <label for="{{ bill_form.notes.id_for_label }}"
+                       class="block text-xs text-slate-400 uppercase
                               tracking-wider"
                 >
                   Notes
