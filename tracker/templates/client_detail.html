@@ -248,7 +248,8 @@
           </div>
 
           {# Bill overage form #}
-          <form method="post" action="/clients/{{ client.pk }}/bill-overage/"
+          <form method="post"
+                action="{% url 'bill-overage' client.pk %}"
                 class="space-y-3 pt-2 border-t border-red-500/10"
           >
             {% csrf_token %}

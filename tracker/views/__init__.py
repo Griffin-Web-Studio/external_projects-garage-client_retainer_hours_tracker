@@ -8,3 +8,4 @@ from .LogTimeView import LogTimeView
 from .ClientDetailView import ClientDetailView
 from .DeleteTimeEntryView import DeleteTimeEntryView
 from .NewTermView import NewTermView
+from .BillOverageView import BillOverageView

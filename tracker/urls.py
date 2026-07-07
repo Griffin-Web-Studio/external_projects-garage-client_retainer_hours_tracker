@@ -47,4 +47,9 @@ urlpatterns = [
         login_required(views.NewTermView.as_view()),
         name="new-term",
     ),
+    path(
+        "clients/<int:pk>/bill-overage/",
+        login_required(views.BillOverageView.as_view()),
+        name="bill-overage",
+    ),
 ]
