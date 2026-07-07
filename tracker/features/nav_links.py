@@ -61,4 +61,11 @@ NAV_LINKS: list[NavLinkConfig] = [
         "mode": DashboardMode.NORMAL,
         # No permission - every authenticated user sees the dashboard.
     },
+    {
+        "name": "client-new",
+        "label": "New Client",
+        "icon": "icon_si_add_circle",
+        "mode": DashboardMode.NORMAL,
+        # No permission - every authenticated user can add a client.
+    },
 ]

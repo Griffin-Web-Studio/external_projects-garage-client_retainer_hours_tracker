@@ -87,6 +87,8 @@ TEMPLATES = [
                 # base app: Injects APP_NAME and OIDC_ENABLED into every
                 # template context
                 "tracker.context_processors.app_settings",
+                # base app: Injects the resolved sidebar nav link list
+                "tracker.context_processors.nav_links",
             ],
         },
     },
