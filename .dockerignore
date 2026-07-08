@@ -1,0 +1,41 @@
+# Secrets/local config - must never end up in an image layer. The
+# container reads these from a mounted volume/env vars at runtime instead;
+# see docs/DEPLOYMENT.md.
+.env
+settings.ini
+
+# Version control / AI session state
+.git
+.claude-sessions
+CLAUDE.md
+
+# Local reference repos dropped into the workspace (not part of this app)
+teamops
+git-sentinel.log
+retainer-django.log
+
+# Python
+.venv
+__pycache__
+*.pyc
+.mypy_cache
+.pytest_cache
+.coverage
+
+# Node / frontend (css-builder stage installs its own copy)
+node_modules
+.pnpm-store
+
+# Django runtime artifacts (rebuilt inside the image / mounted at runtime)
+db.sqlite3
+staticfiles
+static/build
+
+# Editor / OS
+.vscode
+.devcontainer
+.DS_Store
+
+# Docs not needed inside the image
+docs
+*.md
