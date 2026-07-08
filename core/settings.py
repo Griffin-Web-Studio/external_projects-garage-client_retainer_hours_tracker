@@ -33,6 +33,15 @@ DEBUG = app_env.debug
 
 ALLOWED_HOSTS = app_env.allowed_hosts
 
+# Trusts X-Forwarded-Proto/Host from the reverse proxy in front of gunicorn
+# (see nginx.conf) so request.is_secure() and build_absolute_uri() - which
+# the OIDC redirect_uri depends on - report https correctly when TLS is
+# terminated upstream. Only safe because that proxy is the sole ingress:
+# the app container isn't published to the host directly (see
+# docker-compose.yml), so nothing else can reach it to spoof this header.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
 # ─────────────────────────────────────────────────────────────| Application |──
 
 INSTALLED_APPS = [
