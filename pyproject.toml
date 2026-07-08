@@ -9,6 +9,7 @@ dependencies = [
   "whitenoise>=6.9.0",
   "django-environ>=0.13",
   "mozilla-django-oidc>=4.0",
+  "gunicorn>=23.0.0",
 ]
 
 [project.optional-dependencies]
