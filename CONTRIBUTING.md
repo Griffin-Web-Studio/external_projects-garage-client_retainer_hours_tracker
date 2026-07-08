@@ -154,6 +154,38 @@ mixed-concern ones. It makes review and `git bisect` far easier.
 ## Submitting changes
 
 This project is hosted on GitLab (`gitlab.griffin-studio.dev`). Push a
-branch and open a merge request; the pipeline in `.gitlab-ci.yml` (GitLab
-Auto DevOps - build/test/SAST/secret-detection/deploy stages) runs
-automatically.
+branch and open a merge request; `.gitlab-ci.yml` runs `test` and a
+validate-only Docker `build` (Kaniko, `--no-push`) on every MR and push to
+`main`. Nothing gets published from a regular push - see "Releasing" below
+for that.
+
+## Releasing (maintainers)
+
+Versioning is handled by [Commitizen](https://commitizen-tools.github.io/commitizen/)
+(`[tool.commitizen]` in `pyproject.toml`), driven entirely by the
+Conventional Commits history since the last tag - nobody manually decides
+the next version number.
+
+```bash
+cz bump --dry-run   # preview: computed version + generated changelog entry
+cz bump             # bumps pyproject.toml's version, updates CHANGELOG.md,
+                     # commits, and tags (tag_format = "v$version")
+git push && git push --tags
+```
+
+Pushing the tag is what actually ships anything - `.gitlab-ci.yml`'s
+`publish`/`release` stages only trigger on a `vX.Y.Z` tag: Kaniko builds and
+pushes `:<tag>` + `:latest` to the Container Registry, then a GitLab Release
+is created.
+
+The bump level itself is Commitizen's built-in convention, not something
+`pyproject.toml` configures: any `feat:` since the last tag → MINOR,
+`fix:`/`perf:`/`refactor:` only → PATCH, a `BREAKING CHANGE:` footer (or
+`!` after the type) → MAJOR. `docs:`/`chore:`/`style:`/`test:`/`ci:`/
+`build:` commits don't trigger a bump on their own. `change_type_map` in
+`pyproject.toml` is unrelated to bump level - it only relabels changelog
+section headings (e.g. `fix` → "Bug Fixes").
+
+On a repo with no tags yet at all, `cz bump` will interactively ask "Is
+this the first tag created?" - answer yes, or pass `--yes` to skip the
+prompt entirely (non-interactive, e.g. from a script).
