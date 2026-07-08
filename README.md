@@ -79,7 +79,7 @@ python manage.py runserver
 
 Default admin login (Django admin only): `admin@example.com` / `changeme123`
 
-- see [Authentication](#authentication--IdP-oidc--pkce) below for why
+- see [Authentication](#authentication---idp-oidc--pkce) below for why
   this is admin-only.
 
 ## Configuration
@@ -210,17 +210,11 @@ The `--full` seeder refuses to run when `DEBUG=False` - it's dev/demo only.
 
 ## Production
 
-```bash
-pnpm build                          # minify CSS
-python manage.py collectstatic      # gather static files
-```
+Runs with gunicorn behind nginx via Docker Compose - see
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full guide (build/run,
+config, TLS, database backups).
 
-Run with gunicorn behind nginx. Whitenoise serves static files from Django
-directly for simplicity, but nginx is recommended for any meaningful
-traffic.
-
-```
-DEBUG=False
-ALLOWED_HOSTS=yourdomain.com
-SECRET_KEY=<strong-random-key>
-```
+Without Docker, the same idea applies manually: `pnpm build` +
+`python manage.py collectstatic`, run `gunicorn core.wsgi:application`
+behind a reverse proxy, and set `DEBUG=False` / a real `ALLOWED_HOSTS` /
+`SECRET_KEY` in `.env`.
