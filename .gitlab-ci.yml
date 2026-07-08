@@ -1,31 +1,159 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/user/application_security/sast/#available-cicd-variables
-# Secret Detection customization: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/configure/
-# Dependency Scanning customization: https://docs.gitlab.com/user/application_security/dependency_scanning/dependency_scanning_sbom/#customizing-analyzer-behavior
-# Container Scanning customization: https://docs.gitlab.com/user/application_security/container_scanning/#customizing-analyzer-behavior
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ci/variables/#cicd-variable-precedence
+# ──────────────────────| RetainerTracker CI/CD pipeline |──────────────────────
+#
+# Adapted from the git-sentinel project's pipeline (test -> build -> publish ->
+# release, conventional-commit-driven skip rules), swapping PyInstaller binaries
+# published to the Generic Package Registry for a Docker image published to
+# this project's GitLab Container Registry, built with Kaniko (no privileged
+# runner / Docker-in-Docker needed).
+#
+# STAGES
+#
+#   test       manage.py test (runs on every pipeline)
+#   build      Kaniko build validation only - proves the Dockerfile still
+#              builds, never pushes anywhere
+#   publish    Kaniko build + push to the Container Registry (version tags only)
+#   release    create a GitLab Release (tagged builds only)
+#
+#
+# TRIGGERS
+#
+#   MR / commit on main:
+#     -> test
+#     -> build       (validate only, no push)
+#
+#   Versioned tag (vX.Y.Z - expected to come from commitizen/SemVer2, not
+#   created by this pipeline):
+#     -> test
+#     -> publish     (build + push :<tag> and :latest)
+#     -> release
+#
+#
+# COMMIT TYPE FILTER (mirrors git-sentinel)
+#
+#   Skipped entirely: docs, chore, style - no code changes, nothing to
+#   test/build.
+#
+#
+# RUNNER NOTE
+#
+#   No `tags:` set below - this repo's runner fleet tags aren't known from
+#   here. Add a `default: tags: [...]` block if your runners require one.
+
+workflow:
+  auto_cancel:
+    on_new_commit: interruptible
+  rules:
+    # release tags always run
+    - if: $CI_COMMIT_TAG
+
+      # skip docs/chore/style
+    - if: $CI_COMMIT_MESSAGE =~ /^(docs|chore|style)(\(.+\))?!?:/
+      when: never
+
+      # MR pipelines only (suppresses the duplicate branch pipeline)
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+      # pushes to main
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+default:
+  interruptible: true
+
 stages:
-- build
-- test
-- deploy
-- review
-- dast
-- staging
-- canary
-- production
-- incremental rollout 10%
-- incremental rollout 25%
-- incremental rollout 50%
-- incremental rollout 100%
-- performance
-- cleanup
-- secret-detection
-sast:
+  - test
+  - build
+  - publish
+  - release
+
+# ────────────────────────────────────────────────────────────────────| Test |──
+#
+# pytest-django is a listed dev dependency but isn't wired up yet (no
+# pytest.ini / DJANGO_SETTINGS_MODULE - see CONTRIBUTING.md), so this runs
+# the same manage.py test used locally and throughout this project's own
+# development.
+test:
   stage: test
-include:
-- template: Auto-DevOps.gitlab-ci.yml
-variables:
-  SECRET_DETECTION_ENABLED: 'true'
-secret_detection:
-  stage: secret-detection
+  image: python:3.14-slim
+  before_script:
+    - pip install uv --quiet
+    - cp .env.example .env
+    - cp settings.example.ini settings.ini
+    - uv sync --frozen --all-extras
+  script:
+    - uv run python manage.py test
+
+# ─────────────────────────────────────────────────────| Shared Kaniko setup |──
+#
+# Auth pattern from GitLab's own Kaniko docs: CI_REGISTRY_USER/PASSWORD are
+# predefined job tokens, no extra secrets to configure.
+.kaniko:
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - >-
+      echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(printf '%s:%s'
+      "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')\"}}}"
+      > /kaniko/.docker/config.json
+
+# ───────────────────────────────────────────────────────────────────| Build |──
+#
+# Validates the image still builds on every MR/main push. Never pushes - real
+# publishing only happens from a version tag (see `publish` below), so this
+# and `publish` never duplicate work on the same pipeline.
+build:
+  extends: .kaniko
+  stage: build
+  needs: [test]
+  rules:
+    # tags go through `publish` instead
+    - if: $CI_COMMIT_TAG
+      when: never
+
+      # not when commit type is test (code itself is unchanged)
+    - if: $CI_COMMIT_MESSAGE =~ /^test(\(.+\))?!?:/
+      when: never
+
+      # otherwise always
+    - when: always
+  script:
+    - /kaniko/executor
+      --context "$CI_PROJECT_DIR"
+      --dockerfile "$CI_PROJECT_DIR/Dockerfile"
+      --no-push
+
+# ─────────────────────────────────────────────────────────────────| Publish |──
+#
+# The only job that actually pushes an image. Tags the release version and moves
+# :latest - expects $CI_COMMIT_TAG to already be a valid SemVer2 vX.Y.Z
+# (enforced by commitizen at tag-creation time, not by this pipeline).
+publish:
+  extends: .kaniko
+  stage: publish
+  interruptible: false # never cancel a mid-flight push
+  needs: [test]
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+  script:
+    - /kaniko/executor
+      --context "$CI_PROJECT_DIR"
+      --dockerfile "$CI_PROJECT_DIR/Dockerfile"
+      --destination "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+      --destination "$CI_REGISTRY_IMAGE:latest"
+
+# ─────────────────────────────────────────────────────────────────| Release |──
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  interruptible: false # never cancel a mid-flight release
+  needs: [publish]
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+  script:
+    - echo "Releasing $CI_COMMIT_TAG"
+  release:
+    name: "RetainerTracker $CI_COMMIT_TAG"
+    description: "Docker image: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+    tag_name: "$CI_COMMIT_TAG"
