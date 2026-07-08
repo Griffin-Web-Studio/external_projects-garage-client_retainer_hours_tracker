@@ -11,7 +11,14 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN corepack enable && pnpm install --frozen-lockfile
 
+# global.css's `@import "tailwindcss" source("../../")` and
+# `@source "**/*.html"` mean Tailwind's JIT scanner needs to see the actual
+# Django templates (project root, two levels up from static/src/global.css)
+# to know which utility classes are used - copying only static/src left the
+# scanner with nothing to scan, so it only emitted the base layer and the
+# explicitly-inlined safelist classes, not what the templates actually use.
 COPY static/src ./static/src
+COPY tracker/templates ./tracker/templates
 RUN pnpm css:build
 
 # ───────────────────────────────────────────────| Python dependencies stage |──
@@ -57,10 +64,16 @@ COPY --from=python-builder --chown=app:app /app/.venv /app/.venv
 COPY --from=python-builder --chown=app:app /app/staticfiles /app/staticfiles
 COPY --chown=app:app . .
 
+# /app itself needs to be writable by `app`, not just the files in it:
+# .env is never bind-mounted (only injected via compose's env_file: as real
+# env vars), so AppEnv.initialise() always tries to auto-copy .env.example
+# -> .env on startup - WORKDIR created /app as root, and --chown above only
+# covers the files COPY brought in, not the pre-existing directory itself.
+#
 # /app/data holds the SQLite file (see core/app_settings.py DB_DIR) - the
 # only thing that needs to persist across container recreation. Bind a
 # volume here in production.
-RUN mkdir -p /app/data && chown app:app /app/data
+RUN chown app:app /app && mkdir -p /app/data && chown app:app /app/data
 
 COPY --chown=app:app entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
