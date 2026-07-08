@@ -146,7 +146,11 @@ USE_TZ = True
 
 STATIC_URL = app_env.static_url
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+# Only static/build (pnpm build's compiled output) is servable. static/src
+# is Tailwind CLI *input* - its raw `@import "tailwindcss" source(...)`
+# directive isn't a real browser-resolvable path, so collectstatic's
+# post-processor chokes on it if this points at the whole static/ dir.
+STATICFILES_DIRS = [BASE_DIR / "static" / "build"]
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
