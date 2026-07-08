@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# ───────────────────────────────────────────────────────────| CSS build stage |──
+# ─────────────────────────────────────────────────────────| CSS build stage |──
 # Compiles Tailwind v4 (static/src/global.css -> static/build/css/final.css).
 # static/build/ is gitignored, so this has to happen at image-build time.
 FROM node:22-slim AS css-builder
@@ -14,7 +14,7 @@ RUN corepack enable && pnpm install --frozen-lockfile
 COPY static/src ./static/src
 RUN pnpm css:build
 
-# ───────────────────────────────────────────────────| Python dependencies stage |──
+# ───────────────────────────────────────────────| Python dependencies stage |──
 FROM python:3.14-slim AS python-builder
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
@@ -43,7 +43,7 @@ ENV SECRET_KEY=build-time-only-unused-at-runtime \
     ALLOWED_HOSTS=localhost
 RUN /app/.venv/bin/python manage.py collectstatic --noinput
 
-# ────────────────────────────────────────────────────────────────| Runtime |──
+# ─────────────────────────────────────────────────────────────────| Runtime |──
 FROM python:3.14-slim AS runtime
 
 RUN groupadd --system app && useradd --system --gid app --home /app app
