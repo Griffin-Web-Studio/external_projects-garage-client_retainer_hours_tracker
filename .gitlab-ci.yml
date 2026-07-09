@@ -278,3 +278,8 @@ release:
     name: "RetainerTracker $CI_COMMIT_TAG"
     description: "./release-notes.md"
     tag_name: "$CI_COMMIT_TAG"
+    assets:
+      links:
+        - name: "Container image: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+          url: "$CI_PROJECT_URL/container_registry"
+          link_type: image
