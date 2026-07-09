@@ -1,18 +1,22 @@
 # Deploying RetainerTracker
 
-Docker Compose deployment guide: `Dockerfile` (3-stage build), `docker-compose.yml`
-(app + nginx reverse proxy), `nginx.conf`. See [README.md](../README.md) for
-everything else (features, business logic, OIDC setup).
+Docker Compose deployment guide: `docker-compose.yml` (app + nginx reverse
+proxy, pulls the published image from the Container Registry), `nginx.conf`.
+See [README.md](../README.md) for everything else (features, business logic,
+OIDC setup).
 
-> **Not yet build-verified.** These files were written and reviewed
-> carefully, but never actually run through `docker build`/`docker compose up`
-> in a real Docker environment. Treat the first deploy as a dry run - watch
-> the logs, don't point it at anything you can't afford to have go wrong.
+`docker-compose.yml` pulls `registry.gitlab.com/griffin-web-studio/garage/client-retainer-hours-tracker`
+rather than building from source - that's what actually ships. If you're
+developing the app itself and need to build from a local checkout instead,
+use `docker-compose.local.yml` (see [CONTRIBUTING.md](../CONTRIBUTING.md))
+- the two files are otherwise identical.
 
 ## Prerequisites
 
 - Docker and Docker Compose (`docker compose`, the plugin form - not the
   standalone `docker-compose` v1 binary).
+- Access to pull from the Container Registry - `docker login registry.gitlab.com`
+  if the project isn't public.
 - A real `.env` and `settings.ini` at the project root (see below) -
   neither is baked into the image; both are supplied at deploy time.
 
@@ -53,13 +57,18 @@ Edit `settings.ini`'s `[auth]` section for OIDC per the README's
 same steps, just editing the file directly instead of through the app's
 auto-copy-on-first-run behavior.
 
-## Build and run
+## Pull and run
 
 ```bash
-docker compose build
+docker compose pull
 docker compose up -d
 docker compose logs -f web    # entrypoint.sh runs migrations, then gunicorn
 ```
+
+`docker-compose.yml` tracks `:latest`. To pin a specific released version
+instead, edit the image tag in `docker-compose.yml` (or override it with a
+`docker-compose.override.yml`) before pulling - check the project's Releases
+page for available `vX.Y.Z` tags.
 
 The app is reachable through nginx on port 80. `web` itself isn't published
 to the host at all - only nginx is - so nginx is the sole ingress point.
@@ -107,8 +116,7 @@ docker compose cp web:/app/data/backup-$(date +%Y%m%d).db ./
 ## Updating
 
 ```bash
-git pull
-docker compose build
+docker compose pull
 docker compose up -d    # entrypoint.sh re-runs migrations on start
 ```
 

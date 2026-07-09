@@ -29,6 +29,19 @@ pnpm install
 Then set `SECRET_KEY` in `.env` (see README) and run `pnpm build` at least
 once before starting the server.
 
+### Testing the Docker build locally
+
+`docker-compose.yml` pulls the published image (see
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)) - it doesn't build from source.
+To build and run your local checkout in Docker instead (e.g. to test a
+`Dockerfile` change before pushing), use `docker-compose.local.yml`, an
+identical copy except `image:` is swapped back for `build: .`:
+
+```bash
+docker compose -f docker-compose.local.yml build
+docker compose -f docker-compose.local.yml up -d
+```
+
 ## Project structure
 
 ```
