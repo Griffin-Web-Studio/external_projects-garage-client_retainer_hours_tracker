@@ -1,5 +1,7 @@
 ## v0.1.0-alpha.1 (2026-07-09)
 
+This is just a CI fix release.
+
 ## v0.1.0-alpha.0 (2026-07-09)
 
 ### Bug Fixes
