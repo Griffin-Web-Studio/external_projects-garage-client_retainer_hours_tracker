@@ -1,3 +1,17 @@
+## v0.1.0-alpha.2 (2026-07-09)
+
+### Bug Fixes
+
+- **dockerfile**: pin app user to a fixed uid/gid
+
+### Features
+
+- **docker:local**: create docker for local tests
+
+### Refactoring
+
+- **docker**: use image instead of building local
+
 ## v0.1.0-alpha.1 (2026-07-09)
 
 This is just a CI fix release.
