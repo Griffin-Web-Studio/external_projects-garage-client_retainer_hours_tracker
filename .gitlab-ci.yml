@@ -1,37 +1,70 @@
-# ──────────────────────| RetainerTracker CI/CD pipeline |──────────────────────
+# ───────────────────────────────| RetainerTracker CI/CD pipeline |─────────────
 #
 # Adapted from the git-sentinel project's pipeline (test -> build -> publish ->
-# release, conventional-commit-driven skip rules), swapping PyInstaller binaries
-# published to the Generic Package Registry for a Docker image published to
-# this project's GitLab Container Registry, built with Kaniko (no privileged
-# runner / Docker-in-Docker needed).
+# release, conventional-commit-driven skip rules, nightly scheduled builds),
+# swapping PyInstaller binaries published to the Generic Package Registry for a
+# Docker image published to this project's GitLab Container Registry, built
+# with Kaniko (no privileged runner / Docker-in-Docker needed). Single-platform
+# (linux/amd64) - there's no Windows-equivalent second target the way
+# git-sentinel has, and no test coverage gate yet (tracker/tests.py is still a
+# stub, nothing to gate on).
 #
 # STAGES
 #
+#   .pre       (implicit) checks whether main has moved since the last
+#              nightly build
 #   test       manage.py test (runs on every pipeline)
 #   build      Kaniko build validation only - proves the Dockerfile still
-#              builds, never pushes anywhere
-#   publish    Kaniko build + push to the Container Registry (version tags only)
-#   release    create a GitLab Release (tagged builds only)
+#              builds, saved as a downloadable tarball artifact, never pushed
+#              to the registry
+#   publish    Kaniko build + push to the Container Registry (version tags
+#              and the nightly schedule)
+#   release    create a GitLab Release with changelog-derived notes, via
+#              scripts/gen-release-notes.sh (tagged builds only)
 #
 #
 # TRIGGERS
 #
 #   MR / commit on main:
 #     -> test
-#     -> build       (validate only, no push)
+#     -> build          (validate only, tarball artifact, no push)
 #
 #   Versioned tag (vX.Y.Z - expected to come from commitizen/SemVer2, not
 #   created by this pipeline):
 #     -> test
-#     -> publish     (build + push :<tag> and :latest)
+#     -> publish        (build + push :<tag> and :latest)
 #     -> release
+#
+#   Scheduled pipeline (main):
+#     -> check:nightly  compares $CI_COMMIT_SHA against the SHA recorded by
+#                        the last successful nightly publish. If unchanged, it
+#                        fails on purpose - a schedule firing on an unchanged
+#                        main should produce nothing. The red pipeline on
+#                        these nights is that "nothing to do" signal, not a
+#                        real break.
+#     -> test            needs: check:nightly (optional - it doesn't exist on
+#                        non-schedule pipelines), so it's skipped along with
+#                        everything else when unchanged
+#     -> publish:nightly build + push :nightly and :nightly-<short SHA>
+#                        (rolling tags, overwritten/added each run)
+#     -> record:nightly-sha  records $CI_COMMIT_SHA as the new "last nightly"
+#                        marker, so the next scheduled run's check:nightly can
+#                        detect whether main has moved since this build
 #
 #
 # COMMIT TYPE FILTER (mirrors git-sentinel)
 #
 #   Skipped entirely: docs, chore, style - no code changes, nothing to
 #   test/build.
+#   Partially skipped (test only, no build): test - code itself is unchanged.
+#
+#
+# NIGHTLY (setup):
+#
+#   Go to CI/CD > Schedules in GitLab and create a schedule targeting main
+#   (e.g. daily at 03:00 UTC). Each run overwrites the same :nightly image
+#   tag so the pull reference stays stable, and additionally pushes
+#   :nightly-<short SHA> so a specific nightly can still be pulled later.
 #
 #
 # RUNNER NOTE
@@ -43,7 +76,11 @@ workflow:
   auto_cancel:
     on_new_commit: interruptible
   rules:
-    # release tags always run
+      # nightly always runs, regardless of what type the last commit on
+      # main happens to be
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+      # release tags always run
     - if: $CI_COMMIT_TAG
 
       # skip docs/chore/style
@@ -65,15 +102,52 @@ stages:
   - publish
   - release
 
-# ────────────────────────────────────────────────────────────────────| Test |──
+variables:
+  # Generic Package Registry entry used only to store the tiny nightly-sha.txt
+  # change marker - the actual nightly image lives in the Container Registry.
+  NIGHTLY_PACKAGE: $CI_PROJECT_NAME
+
+# ───────────────────────────────────────────────────────| Nightly change gate |──
+#
+# Runs before everything else on a scheduled pipeline. Compares the current
+# commit against the SHA recorded by the last successful nightly publish; if
+# they match, main hasn't moved and there's nothing new to ship, so this job
+# fails on purpose. test, publish:nightly, and record:nightly-sha all
+# `needs: check:nightly` (test marks it `optional: true` since it doesn't
+# exist outside schedule pipelines), so a failure here skips every one of
+# them - a schedule firing on an unchanged main produces a red pipeline and
+# nothing else. That red is the "nothing to do" signal, not a real break.
+check:nightly:
+  stage: .pre
+  image: curlimages/curl:latest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - |
+      rm -f nightly-sha.txt
+      curl --fail --silent --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+           -o nightly-sha.txt \
+           "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/$NIGHTLY_PACKAGE/nightly/nightly-sha.txt" \
+           || true
+      LAST_SHA="$(cat nightly-sha.txt 2>/dev/null || echo "")"
+      if [ "$LAST_SHA" = "$CI_COMMIT_SHA" ]; then
+        echo "No new commits since last nightly build ($LAST_SHA) - nothing to do."
+        exit 1
+      fi
+      echo "New commits since last nightly build ($CI_COMMIT_SHA) - proceeding."
+
+# ─────────────────────────────────────────────────────────────────────| Test |──
 #
 # pytest-django is a listed dev dependency but isn't wired up yet (no
 # pytest.ini / DJANGO_SETTINGS_MODULE - see CONTRIBUTING.md), so this runs
 # the same manage.py test used locally and throughout this project's own
-# development.
+# development. No coverage gate yet - tracker/tests.py is still a stub.
 test:
   stage: test
   image: python:3.14-slim
+  needs:
+    - job: check:nightly
+      optional: true    # doesn't exist outside scheduled pipelines
   before_script:
     - pip install uv --quiet
     - cp .env.example .env
@@ -82,7 +156,7 @@ test:
   script:
     - uv run python manage.py test
 
-# ─────────────────────────────────────────────────────| Shared Kaniko setup |──
+# ───────────────────────────────────────────────────────| Shared Kaniko setup |──
 #
 # Auth pattern from GitLab's own Kaniko docs: CI_REGISTRY_USER/PASSWORD are
 # predefined job tokens, no extra secrets to configure.
@@ -97,17 +171,24 @@ test:
       "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')\"}}}"
       > /kaniko/.docker/config.json
 
-# ───────────────────────────────────────────────────────────────────| Build |──
+# ────────────────────────────────────────────────────────────────────| Build |──
 #
-# Validates the image still builds on every MR/main push. Never pushes - real
-# publishing only happens from a version tag (see `publish` below), so this
-# and `publish` never duplicate work on the same pipeline.
+# Validates the image still builds on every MR/main push. Saved as a
+# downloadable tarball artifact (like git-sentinel's compiled-binary
+# artifacts) so a reviewer can inspect it without a real publish - never
+# pushed to the registry. Real publishing only happens from a version tag or
+# the nightly schedule (see `publish`/`publish:nightly` below), so none of
+# these ever duplicate work on the same pipeline.
 build:
   extends: .kaniko
   stage: build
   needs: [test]
   rules:
-    # tags go through `publish` instead
+      # nightly handles its own build+push in one step
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+
+      # tags go through `publish` instead
     - if: $CI_COMMIT_TAG
       when: never
 
@@ -121,17 +202,23 @@ build:
     - /kaniko/executor
       --context "$CI_PROJECT_DIR"
       --dockerfile "$CI_PROJECT_DIR/Dockerfile"
+      --destination "$CI_REGISTRY_IMAGE:validate-$CI_COMMIT_SHORT_SHA"
       --no-push
+      --tarball "$CI_PROJECT_DIR/image.tar"
+  artifacts:
+    paths:
+      - image.tar
+    expire_in: 1 week
 
-# ─────────────────────────────────────────────────────────────────| Publish |──
+# ──────────────────────────────────────────────────────────────────| Publish |──
 #
-# The only job that actually pushes an image. Tags the release version and moves
-# :latest - expects $CI_COMMIT_TAG to already be a valid SemVer2 vX.Y.Z
-# (enforced by commitizen at tag-creation time, not by this pipeline).
+# Tags the release version and moves :latest - expects $CI_COMMIT_TAG to
+# already be a valid SemVer2 vX.Y.Z (enforced by commitizen at tag-creation
+# time, not by this pipeline).
 publish:
   extends: .kaniko
   stage: publish
-  interruptible: false # never cancel a mid-flight push
+  interruptible: false    # never cancel a mid-flight push
   needs: [test]
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
@@ -142,18 +229,52 @@ publish:
       --destination "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
       --destination "$CI_REGISTRY_IMAGE:latest"
 
+# Rolling nightly image - overwrites :nightly and adds a SHA-pinned tag so a
+# specific night can still be pulled later.
+publish:nightly:
+  extends: .kaniko
+  stage: publish
+  interruptible: false
+  needs: [check:nightly, test]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - /kaniko/executor
+      --context "$CI_PROJECT_DIR"
+      --dockerfile "$CI_PROJECT_DIR/Dockerfile"
+      --destination "$CI_REGISTRY_IMAGE:nightly"
+      --destination "$CI_REGISTRY_IMAGE:nightly-$CI_COMMIT_SHORT_SHA"
+
+# Records $CI_COMMIT_SHA as nightly-sha.txt so the next scheduled run's
+# check:nightly can detect whether main has moved since this build. Separate
+# job from publish:nightly since it needs curl, not Kaniko.
+record:nightly-sha:
+  stage: publish
+  image: curlimages/curl:latest
+  interruptible: false
+  needs: [publish:nightly]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - |
+      echo -n "$CI_COMMIT_SHA" > nightly-sha.txt
+      curl --fail --silent --show-error \
+           --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+           --upload-file nightly-sha.txt \
+           "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/$NIGHTLY_PACKAGE/nightly/nightly-sha.txt"
+
 # ─────────────────────────────────────────────────────────────────| Release |──
 
 release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
-  interruptible: false # never cancel a mid-flight release
+  interruptible: false    # never cancel a mid-flight release
   needs: [publish]
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
   script:
-    - echo "Releasing $CI_COMMIT_TAG"
+    - sh scripts/gen-release-notes.sh "$CI_COMMIT_TAG" "$CI_REGISTRY_IMAGE" "$CI_PROJECT_URL" > release-notes.md
   release:
     name: "RetainerTracker $CI_COMMIT_TAG"
-    description: "Docker image: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+    description: "./release-notes.md"
     tag_name: "$CI_COMMIT_TAG"
