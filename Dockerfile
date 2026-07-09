@@ -53,7 +53,11 @@ RUN /app/.venv/bin/python manage.py collectstatic --noinput
 # ─────────────────────────────────────────────────────────────────| Runtime |──
 FROM python:3.14-slim AS runtime
 
-RUN groupadd --system app && useradd --system --gid app --home /app app
+# Fixed UID/GID (not auto-assigned) so docker-compose.yml's init-permissions
+# service - a minimal image, not this one, so it doesn't have `app` defined
+# by name - can `chown 1000:1000` bind-mounted config to match.
+RUN groupadd --system --gid 1000 app \
+    && useradd --system --uid 1000 --gid app --home /app app
 
 WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH" \
