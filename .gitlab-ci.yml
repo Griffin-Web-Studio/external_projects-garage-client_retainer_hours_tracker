@@ -1,4 +1,4 @@
-# ───────────────────────────────| RetainerTracker CI/CD pipeline |─────────────
+# ──────────────────────| RetainerTracker CI/CD pipeline |──────────────────────
 #
 # Adapted from the git-sentinel project's pipeline (test -> build -> publish ->
 # release, conventional-commit-driven skip rules, nightly scheduled builds),
@@ -76,8 +76,8 @@ workflow:
   auto_cancel:
     on_new_commit: interruptible
   rules:
-      # nightly always runs, regardless of what type the last commit on
-      # main happens to be
+    # nightly always runs, regardless of what type the last commit on
+    # main happens to be
     - if: $CI_PIPELINE_SOURCE == "schedule"
 
       # release tags always run
@@ -107,7 +107,7 @@ variables:
   # change marker - the actual nightly image lives in the Container Registry.
   NIGHTLY_PACKAGE: $CI_PROJECT_NAME
 
-# ───────────────────────────────────────────────────────| Nightly change gate |──
+# ─────────────────────────────────────────────────────| Nightly change gate |──
 #
 # Runs before everything else on a scheduled pipeline. Compares the current
 # commit against the SHA recorded by the last successful nightly publish; if
@@ -136,7 +136,7 @@ check:nightly:
       fi
       echo "New commits since last nightly build ($CI_COMMIT_SHA) - proceeding."
 
-# ─────────────────────────────────────────────────────────────────────| Test |──
+# ────────────────────────────────────────────────────────────────────| Test |──
 #
 # pytest-django is a listed dev dependency but isn't wired up yet (no
 # pytest.ini / DJANGO_SETTINGS_MODULE - see CONTRIBUTING.md), so this runs
@@ -147,7 +147,7 @@ test:
   image: python:3.14-slim
   needs:
     - job: check:nightly
-      optional: true    # doesn't exist outside scheduled pipelines
+      optional: true # doesn't exist outside scheduled pipelines
   before_script:
     - pip install uv --quiet
     - cp .env.example .env
@@ -156,7 +156,7 @@ test:
   script:
     - uv run python manage.py test
 
-# ───────────────────────────────────────────────────────| Shared Kaniko setup |──
+# ─────────────────────────────────────────────────────| Shared Kaniko setup |──
 #
 # Auth pattern from GitLab's own Kaniko docs: CI_REGISTRY_USER/PASSWORD are
 # predefined job tokens, no extra secrets to configure.
@@ -171,7 +171,7 @@ test:
       "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" | base64 | tr -d '\n')\"}}}"
       > /kaniko/.docker/config.json
 
-# ────────────────────────────────────────────────────────────────────| Build |──
+# ───────────────────────────────────────────────────────────────────| Build |──
 #
 # Validates the image still builds on every MR/main push. Saved as a
 # downloadable tarball artifact (like git-sentinel's compiled-binary
@@ -184,7 +184,7 @@ build:
   stage: build
   needs: [test]
   rules:
-      # nightly handles its own build+push in one step
+    # nightly handles its own build+push in one step
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
 
@@ -210,7 +210,7 @@ build:
       - image.tar
     expire_in: 1 week
 
-# ──────────────────────────────────────────────────────────────────| Publish |──
+# ─────────────────────────────────────────────────────────────────| Publish |──
 #
 # Tags the release version and moves :latest - expects $CI_COMMIT_TAG to
 # already be a valid SemVer2 vX.Y.Z (enforced by commitizen at tag-creation
@@ -218,7 +218,7 @@ build:
 publish:
   extends: .kaniko
   stage: publish
-  interruptible: false    # never cancel a mid-flight push
+  interruptible: false # never cancel a mid-flight push
   needs: [test]
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
@@ -268,7 +268,7 @@ record:nightly-sha:
 release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
-  interruptible: false    # never cancel a mid-flight release
+  interruptible: false # never cancel a mid-flight release
   needs: [publish]
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
