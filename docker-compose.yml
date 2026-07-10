@@ -1,14 +1,4 @@
 services:
-  # Fixes ownership/permissions on bind-mounted config before `web` starts,
-  # then exits - doesn't stick around consuming resources. Needed because
-  # settings.ini's host-side ownership/perms are whatever they happen to be
-  # in prod, not necessarily readable by the image's non-root `app` (uid
-  # 1000) user; and settings.ini is mounted :ro in `web` below, so `web`
-  # itself could never fix this even if it ran as root - a read-only bind
-  # mount blocks writes (including chown/chmod) at the mount level
-  # regardless of the process's privileges. Minimal image, not the app
-  # image - all it needs is chown/chmod, and 1000:1000 matches the app
-  # image's fixed (not auto-assigned) uid/gid - see the Dockerfile.
   init-permissions:
     image: alpine:latest
     user: root
@@ -40,10 +30,7 @@ services:
       DB_DIR: /app/data
     volumes:
       - app-data:/app/data
-      # settings.ini is INI-format business config (branding/hours/auth),
-      # not a simple KEY=VALUE env file, so it's bind-mounted rather than
-      # passed via env_file. Read-only: the app never writes to it.
-      - ./settings.ini:/app/settings.ini:ro
+      - ./settings.ini:/app/settings.ini:ro # settings.ini is INI-format business config (branding/hours/auth)
     expose:
       - "8000"
 
