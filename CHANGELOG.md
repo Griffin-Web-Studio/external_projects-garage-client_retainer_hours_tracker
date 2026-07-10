@@ -1,3 +1,13 @@
+## v0.1.0-alpha.3 (2026-07-10)
+
+### Features
+
+- **docker:compose:coolify**: add coolify template
+
+### Refactoring
+
+- **docker:entrypoint**: add env file generation
+
 ## v0.1.0-alpha.2 (2026-07-09)
 
 ### Bug Fixes
