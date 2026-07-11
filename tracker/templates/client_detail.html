@@ -75,11 +75,11 @@
           <div class="bg-white/5 border border-secondary/20 rounded-2xl p-4">
             <p class="text-xs text-slate-400 mb-1">Remaining (Support)</p>
             <p class="font-mono text-2xl font-semibold text-white">
-              {{ summary.remaining_support|clamp|fmt_hours }}
+              {{ summary.remaining_support|clamp|fmt_hm }}
             </p>
             {% if summary.support_overage > 0 %}
               <p class="text-xs text-red-400 mt-1">
-                {{ summary.support_overage|fmt_hours }} overage
+                {{ summary.support_overage|fmt_hm }} overage
               </p>
             {% endif %}
           </div>
@@ -87,17 +87,17 @@
           <div class="bg-white/5 border border-secondary/20 rounded-2xl p-4">
             <p class="text-xs text-slate-400 mb-1">Used this term</p>
             <p class="font-mono text-2xl font-semibold text-white">
-              {{ summary.total_support_used|fmt_hours }}
+              {{ summary.total_support_used|fmt_hm }}
             </p>
             <p class="text-xs text-slate-500 mt-1">
-              of {{ summary.total_support_allocated|fmt_hours }} allocated
+              of {{ summary.total_support_allocated|fmt_hm }} allocated
             </p>
           </div>
 
           <div class="bg-white/5 border border-secondary/20 rounded-2xl p-4">
             <p class="text-xs text-slate-400 mb-1">Monthly allocation</p>
             <p class="font-mono text-2xl font-semibold text-white">
-              {{ summary.monthly_allocation|fmt_hours }}
+              {{ summary.monthly_allocation|fmt_hm }}
             </p>
             <p class="text-xs text-slate-500 mt-1">
               Month {{ summary.months_elapsed }} of 12
@@ -110,15 +110,15 @@
             >
               <p class="text-xs text-slate-400 mb-1">Dev hours remaining</p>
               <p class="font-mono text-2xl font-semibold text-white">
-                {{ summary.remaining_dev|clamp|fmt_hours }}
+                {{ summary.remaining_dev|clamp|fmt_hm }}
               </p>
               {% if summary.dev_overage > 0 %}
                 <p class="text-xs text-red-400 mt-1">
-                  {{ summary.dev_overage|fmt_hours }} overage
+                  {{ summary.dev_overage|fmt_hm }} overage
                 </p>
               {% else %}
                 <p class="text-xs text-slate-500 mt-1">
-                  of {{ summary.total_dev_available|fmt_hours }}
+                  of {{ summary.total_dev_available|fmt_hm }}
                 </p>
               {% endif %}
             </div>
@@ -164,8 +164,8 @@
             <div>
               <p class="text-slate-400 text-xs">Support used</p>
               <p class="text-white font-mono">
-                {{ summary.total_support_used|fmt_hours }} /
-                {{ summary.total_support_allocated|fmt_hours }}
+                {{ summary.total_support_used|fmt_hm }} /
+                {{ summary.total_support_allocated|fmt_hm }}
               </p>
             </div>
 
@@ -173,7 +173,7 @@
               <div>
                 <p class="text-slate-400 text-xs">Support overage</p>
                 <p class="text-red-400 font-mono">
-                  {{ summary.support_overage|fmt_hours }}
+                  {{ summary.support_overage|fmt_hm }}
                 </p>
               </div>
             {% endif %}
@@ -181,7 +181,7 @@
             <div>
               <p class="text-slate-400 text-xs">Available to carry over</p>
               <p class="text-amber-300 font-mono">
-                {{ summary.remaining_support_for_carryover|fmt_hours }}
+                {{ summary.remaining_support_for_carryover|fmt_hm }}
               </p>
             </div>
           </div>
@@ -192,17 +192,17 @@
             <p>On renewal:</p>
             <p>
               &rarr; <span class="text-white">Convert:</span>
-              {{ summary.remaining_support_for_carryover|fmt_hours }} support
+              {{ summary.remaining_support_for_carryover|fmt_hm }} support
               &rarr;
               <span class="font-mono text-secondary">
-                {{ conv_dev_hours|fmt_hours }} dev hours
+                {{ conv_dev_hours|fmt_hm }} dev hours
               </span>
             </p>
             <p>
               &rarr; <span class="text-white">Migrate:</span>
               carry
               <span class="font-mono text-secondary">
-                {{ mig_sup_hours|fmt_hours }}
+                {{ mig_sup_hours|fmt_hm }}
               </span>
               support hours forward (max {{ max_migrate }}h)
             </p>
@@ -222,11 +222,11 @@
               <div>
                 <p class="text-slate-400 text-xs">Support - unbilled</p>
                 <p class="text-red-300 font-mono font-semibold">
-                  {{ unbilled_s|fmt_hours }}
+                  {{ unbilled_s|fmt_hm }}
                 </p>
                 {% if billed_s > 0 %}
                   <p class="text-slate-500 text-xs">
-                    {{ billed_s|fmt_hours }} already billed
+                    {{ billed_s|fmt_hm }} already billed
                   </p>
                 {% endif %}
               </div>
@@ -236,11 +236,11 @@
               <div>
                 <p class="text-slate-400 text-xs">Development - unbilled</p>
                 <p class="text-red-300 font-mono font-semibold">
-                  {{ unbilled_d|fmt_hours }}
+                  {{ unbilled_d|fmt_hm }}
                 </p>
                 {% if billed_d > 0 %}
                   <p class="text-slate-500 text-xs">
-                    {{ billed_d|fmt_hours }} already billed
+                    {{ billed_d|fmt_hm }} already billed
                   </p>
                 {% endif %}
               </div>
@@ -277,9 +277,19 @@
                 >
                   Hours to Bill
                 </label>
-                {{ bill_form.hours_charged }}
+                <div class="grid grid-cols-2 gap-2">
+                  {{ bill_form.hours_charged }}
+                  {{ bill_form.minutes_charged }}
+                </div>
               </div>
             </div>
+
+            {% for error in bill_form.hours_charged.errors %}
+              <p class="text-red-400 text-xs">{{ error }}</p>
+            {% endfor %}
+            {% for error in bill_form.minutes_charged.errors %}
+              <p class="text-red-400 text-xs">{{ error }}</p>
+            {% endfor %}
 
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1">
@@ -355,7 +365,7 @@
                       </span>
                     </td>
                     <td class="px-4 py-3 font-mono font-medium text-white">
-                      {{ b.hours_charged|fmt_hours }}
+                      {{ b.hours_charged|hm:b.minutes_charged }}
                     </td>
                     <td class="px-4 py-3 text-slate-400">
                       {{ b.invoice_ref|default:"-" }}
@@ -426,7 +436,7 @@
                       </span>
                     </td>
                     <td class="px-4 py-3 font-mono font-medium text-white">
-                      {{ entry.hours|fmt_hours }}
+                      {{ entry.hours|hm:entry.minutes }}
                     </td>
                     <td class="px-4 py-3 text-slate-300 max-w-xs truncate">
                       {{ entry.description }}

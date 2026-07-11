@@ -57,6 +57,7 @@ class ClientTermAdmin(admin.ModelAdmin):
         "start_date",
         "end_date",
         "monthly_hours",
+        "monthly_minutes",
         "carry_over_type",
     )
     list_filter = ("carry_over_type",)
@@ -68,6 +69,7 @@ class TimeEntryAdmin(admin.ModelAdmin):
         "client",
         "date",
         "hours",
+        "minutes",
         "type",
         "employee",
         "description",
@@ -83,6 +85,7 @@ class OverageBillingAdmin(admin.ModelAdmin):
         "term",
         "type",
         "hours_charged",
+        "minutes_charged",
         "invoice_ref",
         "billed_at",
     )

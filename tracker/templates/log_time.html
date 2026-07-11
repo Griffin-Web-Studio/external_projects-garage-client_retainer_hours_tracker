@@ -59,9 +59,21 @@
                 Hours <span class="text-secondary">*</span>
               </label>
 
-              {{ form.hours }}
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  {{ form.hours }}
+                  <p class="text-xs text-slate-500 mt-1">Hours</p>
+                </div>
+                <div>
+                  {{ form.minutes }}
+                  <p class="text-xs text-slate-500 mt-1">Minutes</p>
+                </div>
+              </div>
 
               {% for error in form.hours.errors %}
+                <p class="text-xs text-red-400">{{ error }}</p>
+              {% endfor %}
+              {% for error in form.minutes.errors %}
                 <p class="text-xs text-red-400">{{ error }}</p>
               {% endfor %}
             </div>

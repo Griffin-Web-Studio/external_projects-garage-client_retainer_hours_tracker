@@ -2,25 +2,46 @@
 
 from django import template
 
-from tracker.hours import fmt_hours as _fmt_hours
+from tracker.hours import fmt_hm as _fmt_hm
+from tracker.hours import hm_to_minutes
 
 register = template.Library()
 
 
 @register.filter
-def fmt_hours(value):
-    """Formats a float as a compact hours string for template display.
+def fmt_hm(value):
+    """Formats a total-minutes value as a compact "Xh Ym" string.
 
     Args:
-        value: Value to format, coerced to float.
+        value: Total minutes to format, coerced to int.
 
     Returns:
-        str: `value` formatted as e.g. "5h" or "5.5h", or "—" if `value`
-            cannot be converted to a float.
+        str: `value` formatted as e.g. "5h", "30m", or "5h 30m", or "—"
+            if `value` cannot be converted to an int.
     """
 
     try:
-        return _fmt_hours(float(value))
+        return _fmt_hm(int(value))
+
+    except TypeError, ValueError:
+        return "—"
+
+
+@register.filter
+def hm(hours, minutes):
+    """Formats a raw hours + minutes field pair for template display.
+
+    Args:
+        hours: Whole hours, coerced to int.
+        minutes: Minutes (0-59), coerced to int.
+
+    Returns:
+        str: `hours`/`minutes` formatted as e.g. "5h", "30m", or "5h 30m",
+            or "—" if either value cannot be converted to an int.
+    """
+
+    try:
+        return _fmt_hm(hm_to_minutes(int(hours), int(minutes)))
 
     except TypeError, ValueError:
         return "—"

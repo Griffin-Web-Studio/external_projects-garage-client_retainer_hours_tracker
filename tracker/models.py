@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -172,14 +173,25 @@ class ClientTerm(models.Model):
     term_number = models.PositiveIntegerField()
     start_date = models.DateField()
     end_date = models.DateField()  # set to start_date + 1 year on save
-    monthly_hours = models.FloatField()
+    monthly_hours = models.PositiveIntegerField()
+    monthly_minutes = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(59)]
+    )
 
     # Carryover from the previous term
     carry_over_type = models.CharField(
         max_length=20, choices=CARRY_CHOICES, default=CARRY_NONE
     )
-    dev_hours_from_conversion = models.FloatField(default=0)  # CONVERT_TO_DEV
-    migrated_support_hours = models.FloatField(default=0)  # MIGRATE_SUPPORT
+    # CONVERT_TO_DEV
+    dev_hours_from_conversion = models.PositiveIntegerField(default=0)
+    dev_minutes_from_conversion = models.PositiveSmallIntegerField(
+        default=0, validators=[MaxValueValidator(59)]
+    )
+    # MIGRATE_SUPPORT
+    migrated_support_hours = models.PositiveIntegerField(default=0)
+    migrated_support_minutes = models.PositiveSmallIntegerField(
+        default=0, validators=[MaxValueValidator(59)]
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -220,7 +232,10 @@ class TimeEntry(models.Model):
         Employee, on_delete=models.PROTECT, related_name="time_entries"
     )
     date = models.DateField()
-    hours = models.FloatField()
+    hours = models.PositiveIntegerField()
+    minutes = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(59)]
+    )
     description = models.TextField()
     type = models.CharField(
         max_length=20, choices=TYPE_CHOICES, default=TYPE_SUPPORT
@@ -232,7 +247,11 @@ class TimeEntry(models.Model):
         ordering = ["-date", "-created_at"]
 
     def __str__(self):
-        return f"{self.client.name} — {self.hours}h {self.type} on {self.date}"
+        suffix = f" {self.minutes}m" if self.minutes else ""
+        return (
+            f"{self.client.name} — {self.hours}h{suffix} {self.type} on "
+            f"{self.date}"
+        )
 
 
 # ──────────────────────────────────────────────────────────| OverageBilling |──
@@ -253,7 +272,10 @@ class OverageBilling(models.Model):
         ClientTerm, on_delete=models.CASCADE, related_name="overage_billings"
     )
     type = models.CharField(max_length=20)  # SUPPORT | DEVELOPMENT
-    hours_charged = models.FloatField()
+    hours_charged = models.PositiveIntegerField()
+    minutes_charged = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(59)]
+    )
     invoice_ref = models.CharField(max_length=100, blank=True)
     notes = models.TextField(blank=True)
     billed_at = models.DateTimeField(auto_now_add=True)
@@ -263,4 +285,8 @@ class OverageBilling(models.Model):
         ordering = ["-billed_at"]
 
     def __str__(self):
-        return f"{self.client.name} — {self.hours_charged}h {self.type} billed"
+        suffix = f" {self.minutes_charged}m" if self.minutes_charged else ""
+        return (
+            f"{self.client.name} — {self.hours_charged}h{suffix} "
+            f"{self.type} billed"
+        )

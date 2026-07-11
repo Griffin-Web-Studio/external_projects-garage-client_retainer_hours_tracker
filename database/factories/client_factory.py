@@ -49,9 +49,14 @@ class ClientTermFactory(DjangoModelFactory):
     monthly_hours = factory.LazyFunction(
         lambda: random.choice([5, 8, 10, 15, 20])
     )
+    monthly_minutes = factory.LazyFunction(
+        lambda: random.choice([0, 15, 30, 45])
+    )
     carry_over_type = ClientTerm.CARRY_NONE
     dev_hours_from_conversion = 0
+    dev_minutes_from_conversion = 0
     migrated_support_hours = 0
+    migrated_support_minutes = 0
 
 
 # ────────────────────────────────────────────────────────| TimeEntryFactory |──
@@ -72,8 +77,11 @@ class TimeEntryFactory(DjangoModelFactory):
     date = factory.LazyFunction(
         lambda: _faker.date_between(start_date="-6m", end_date="today")
     )
-    hours = factory.LazyFunction(
-        lambda: round(random.uniform(0.5, 4.0) * 2) / 2
+    hours = factory.LazyFunction(lambda: random.randint(0, 4))
+    minutes = factory.LazyAttribute(
+        lambda o: random.choice(
+            [15, 30, 45] if o.hours == 0 else [0, 15, 30, 45]
+        )
     )
     description = factory.LazyFunction(_faker.sentence)
     type = factory.LazyFunction(

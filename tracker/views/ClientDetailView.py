@@ -7,10 +7,11 @@ from tracker.hours import (
     ExpiredTermSummary,
     billed_overage,
     calculate_term_hours,
-    compute_converted_dev_hours,
-    compute_migrated_support_hours,
-    fmt_hours,
+    compute_converted_dev_minutes,
+    compute_migrated_support_minutes,
+    fmt_hm,
     get_hours_config,
+    minutes_to_hm,
     unbilled_overage,
 )
 from tracker.models import Client
@@ -76,12 +77,14 @@ class ClientDetailView(LoginRequiredMixin, View):
         unbilled_d = unbilled_overage(d_overage, billings, "DEVELOPMENT")
 
         if bill_form is None:
+            unbilled_hours, unbilled_minutes = minutes_to_hm(
+                unbilled_s if unbilled_s > 0 else unbilled_d
+            )
             bill_form = BillOverageForm(
                 initial={
                     "type": "SUPPORT" if unbilled_s > 0 else "DEVELOPMENT",
-                    "hours_charged": (
-                        unbilled_s if unbilled_s > 0 else unbilled_d
-                    ),
+                    "hours_charged": unbilled_hours,
+                    "minutes_charged": unbilled_minutes,
                 }
             )
 
@@ -89,10 +92,10 @@ class ClientDetailView(LoginRequiredMixin, View):
         mig_sup_hours = 0
 
         if not is_active_term and isinstance(summary, ExpiredTermSummary):
-            conv_dev_hours = compute_converted_dev_hours(
+            conv_dev_hours = compute_converted_dev_minutes(
                 summary.remaining_support_for_carryover, cfg
             )
-            mig_sup_hours = compute_migrated_support_hours(
+            mig_sup_hours = compute_migrated_support_minutes(
                 summary.remaining_support_for_carryover, cfg
             )
 
@@ -115,6 +118,6 @@ class ClientDetailView(LoginRequiredMixin, View):
                 "conv_dev_hours": conv_dev_hours,
                 "mig_sup_hours": mig_sup_hours,
                 "max_migrate": cfg.max_migrate_hours,
-                "fmt_hours": fmt_hours,
+                "fmt_hm": fmt_hm,
             },
         )

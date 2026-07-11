@@ -64,6 +64,7 @@ class LogTimeView(LoginRequiredMixin, View):
                 employee=request.user,
                 date=form.cleaned_data["date"],
                 hours=form.cleaned_data["hours"],
+                minutes=form.cleaned_data["minutes"],
                 type=form.cleaned_data["type"],
                 description=form.cleaned_data["description"],
             )

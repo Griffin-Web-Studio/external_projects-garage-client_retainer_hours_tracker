@@ -38,6 +38,7 @@ class BillOverageView(LoginRequiredMixin, View):
                 term=term,
                 type=form.cleaned_data["type"],
                 hours_charged=form.cleaned_data["hours_charged"],
+                minutes_charged=form.cleaned_data["minutes_charged"],
                 invoice_ref=form.cleaned_data.get("invoice_ref") or "",
                 notes=form.cleaned_data.get("notes") or "",
             )

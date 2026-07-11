@@ -57,6 +57,7 @@ class NewClientView(LoginRequiredMixin, View):
                 start_date=start,
                 end_date=end,
                 monthly_hours=form.cleaned_data["monthly_hours"],
+                monthly_minutes=form.cleaned_data["monthly_minutes"],
                 carry_over_type=ClientTerm.CARRY_NONE,
             )
 

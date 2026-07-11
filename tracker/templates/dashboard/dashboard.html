@@ -122,15 +122,15 @@
                       <span class="font-mono text-3xl font-medium
                                   text-white"
                       >
-                        {{ summary.remaining_support|clamp|fmt_hours }}
+                        {{ summary.remaining_support|clamp|fmt_hm }}
                       </span>
                       <span class="text-slate-400 text-sm ml-1.5">
                         remaining
                       </span>
                     </div>
                     <span class="text-xs text-slate-500 font-mono">
-                      {{ summary.total_support_used|fmt_hours }} /
-                      {{ summary.total_support_allocated|fmt_hours }}
+                      {{ summary.total_support_used|fmt_hm }} /
+                      {{ summary.total_support_allocated|fmt_hm }}
                     </span>
                   </div>
 
@@ -150,18 +150,18 @@
                               text-slate-400"
                   >
                     <span class="font-mono">
-                      {{ summary.monthly_allocation|fmt_hours }}
+                      {{ summary.monthly_allocation|fmt_hm }}
                       <span class="text-slate-500">/mo</span>
                     </span>
                     <span>Month {{ summary.months_elapsed }} of 12</span>
                     {% if summary.total_dev_available > 0 %}
                       <span class="text-secondary">
-                        +{{ summary.remaining_dev|clamp|fmt_hours }} dev
+                        +{{ summary.remaining_dev|clamp|fmt_hm }} dev
                       </span>
                     {% endif %}
                     {% if summary.support_overage > 0 %}
                       <span class="text-red-400 font-medium">
-                        {{ summary.support_overage|fmt_hours }} overage
+                        {{ summary.support_overage|fmt_hm }} overage
                       </span>
                     {% endif %}
                   </div>

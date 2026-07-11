@@ -140,21 +140,54 @@ def _months_between(start: date, end: date) -> int:
     return (end.year - start.year) * 12 + (end.month - start.month)
 
 
-def fmt_hours(value: float) -> str:
-    """Formats a float as a compact hours string.
+def hm_to_minutes(hours: int, minutes: int) -> int:
+    """Combines an hours + minutes pair into a total minute count.
 
     Args:
-        value (float): Number of hours.
+        hours (int): Whole hours.
+        minutes (int): Minutes, 0-59.
 
     Returns:
-        str: `value` formatted as e.g. "5h" for whole numbers or "5.5h"
-            for fractional ones.
+        int: Total minutes represented by `hours` and `minutes`.
     """
 
-    if value == int(value):
-        return f"{int(value)}h"
+    return hours * 60 + minutes
 
-    return f"{value:.1f}h"
+
+def minutes_to_hm(total_minutes: int) -> tuple[int, int]:
+    """Splits a total minute count back into an hours + minutes pair.
+
+    Args:
+        total_minutes (int): Total minutes, expected to be >= 0.
+
+    Returns:
+        tuple[int, int]: `(hours, minutes)` such that
+            `hours * 60 + minutes == total_minutes`.
+    """
+
+    return divmod(int(round(total_minutes)), 60)
+
+
+def fmt_hm(total_minutes: int) -> str:
+    """Formats a total minute count as a compact "Xh Ym" string.
+
+    Args:
+        total_minutes (int): Total minutes to format.
+
+    Returns:
+        str: e.g. "5h" when there's no remainder, "30m" when under an
+            hour, or "5h 30m" for a mix of both.
+    """
+
+    hours, minutes = minutes_to_hm(total_minutes)
+
+    if minutes == 0:
+        return f"{hours}h"
+
+    if hours == 0:
+        return f"{minutes}m"
+
+    return f"{hours}h {minutes}m"
 
 
 # ─────────────────────────────────────────────────────| Summary dataclasses |──
@@ -166,43 +199,46 @@ HoursStatus = Literal["healthy", "low", "overage"]
 class ActiveTermSummary:
     """Computed hours summary for a term that is still in progress.
 
+    All hour quantities below are expressed in total minutes (not decimal
+    hours) - format them for display with `fmt_hm`.
+
     Attributes:
         status (Literal["active"]): Always "active" for this summary type.
-        monthly_allocation (float): Support hours granted per calendar
+        monthly_allocation (int): Support minutes granted per calendar
             month under the term.
         months_elapsed (int): Number of months counted towards allocation
             so far, capped at the term length.
-        total_support_allocated (float): Total support hours allocated to
+        total_support_allocated (int): Total support minutes allocated to
             date (monthly allocation x months elapsed, plus any migrated
-            hours).
-        total_support_used (float): Total support hours logged so far.
-        remaining_support (float): Support hours left to use; negative
+            minutes).
+        total_support_used (int): Total support minutes logged so far.
+        remaining_support (int): Support minutes left to use; negative
             values are clamped to 0 via `support_overage`.
-        support_used_pct (float): Percentage of allocated support hours
+        support_used_pct (float): Percentage of allocated support minutes
             used, capped at 100.
-        support_overage (float): Support hours used beyond the allocation.
-        total_dev_available (float): Development hours available from a
+        support_overage (int): Support minutes used beyond the allocation.
+        total_dev_available (int): Development minutes available from a
             previous term's conversion.
-        total_dev_used (float): Development hours logged so far.
-        remaining_dev (float): Development hours left to use.
-        dev_overage (float): Development hours used beyond what's
+        total_dev_used (int): Development minutes logged so far.
+        remaining_dev (int): Development minutes left to use.
+        dev_overage (int): Development minutes used beyond what's
             available.
         hours_status (HoursStatus): Overall health of the term - "healthy",
             "low", or "overage".
     """
 
     status: Literal["active"]
-    monthly_allocation: float
+    monthly_allocation: int
     months_elapsed: int
-    total_support_allocated: float
-    total_support_used: float
-    remaining_support: float
+    total_support_allocated: int
+    total_support_used: int
+    remaining_support: int
     support_used_pct: float
-    support_overage: float
-    total_dev_available: float
-    total_dev_used: float
-    remaining_dev: float
-    dev_overage: float
+    support_overage: int
+    total_dev_available: int
+    total_dev_used: int
+    remaining_dev: int
+    dev_overage: int
     hours_status: HoursStatus
 
 
@@ -210,34 +246,37 @@ class ActiveTermSummary:
 class ExpiredTermSummary:
     """Computed hours summary for a term that has ended.
 
+    All hour quantities below are expressed in total minutes (not decimal
+    hours) - format them for display with `fmt_hm`.
+
     Attributes:
         status (Literal["expired"]): Always "expired" for this summary
             type.
-        total_support_allocated (float): Total support hours allocated
+        total_support_allocated (int): Total support minutes allocated
             over the full term.
-        total_support_used (float): Total support hours logged over the
+        total_support_used (int): Total support minutes logged over the
             full term.
-        support_overage (float): Support hours used beyond the allocation.
-        total_dev_available (float): Development hours available from a
+        support_overage (int): Support minutes used beyond the allocation.
+        total_dev_available (int): Development minutes available from a
             previous term's conversion.
-        total_dev_used (float): Development hours logged over the full
+        total_dev_used (int): Development minutes logged over the full
             term.
-        remaining_dev (float): Development hours never used.
-        dev_overage (float): Development hours used beyond what's
+        remaining_dev (int): Development minutes never used.
+        dev_overage (int): Development minutes used beyond what's
             available.
-        remaining_support_for_carryover (float): Unused support hours
+        remaining_support_for_carryover (int): Unused support minutes
             eligible for conversion or migration into the next term.
     """
 
     status: Literal["expired"]
-    total_support_allocated: float
-    total_support_used: float
-    support_overage: float
-    total_dev_available: float
-    total_dev_used: float
-    remaining_dev: float
-    dev_overage: float
-    remaining_support_for_carryover: float
+    total_support_allocated: int
+    total_support_used: int
+    support_overage: int
+    total_dev_available: int
+    total_dev_used: int
+    remaining_dev: int
+    dev_overage: int
+    remaining_support_for_carryover: int
 
 
 TermSummary = Union[ActiveTermSummary, ExpiredTermSummary]
@@ -274,16 +313,24 @@ def calculate_term_hours(
     support_entries = [e for e in time_entries if e.type == "SUPPORT"]
     dev_entries = [e for e in time_entries if e.type == "DEVELOPMENT"]
 
-    total_support_used = sum(e.hours for e in support_entries)
-    total_dev_used = sum(e.hours for e in dev_entries)
-    total_dev_available = term.dev_hours_from_conversion
+    total_support_used = sum(
+        hm_to_minutes(e.hours, e.minutes) for e in support_entries
+    )
+    total_dev_used = sum(hm_to_minutes(e.hours, e.minutes) for e in dev_entries)
+    total_dev_available = hm_to_minutes(
+        term.dev_hours_from_conversion, term.dev_minutes_from_conversion
+    )
+    monthly_allocation = hm_to_minutes(term.monthly_hours, term.monthly_minutes)
+    migrated_support = hm_to_minutes(
+        term.migrated_support_hours, term.migrated_support_minutes
+    )
 
     if is_active:
         elapsed = _months_between(term.start_date, today)
         months_elapsed = min(elapsed + 1, config.term_months)
 
         total_support_allocated = (
-            months_elapsed * term.monthly_hours + term.migrated_support_hours
+            months_elapsed * monthly_allocation + migrated_support
         )
 
         remaining_support = total_support_allocated - total_support_used
@@ -308,7 +355,7 @@ def calculate_term_hours(
 
         return ActiveTermSummary(
             status="active",
-            monthly_allocation=term.monthly_hours,
+            monthly_allocation=monthly_allocation,
             months_elapsed=months_elapsed,
             total_support_allocated=total_support_allocated,
             total_support_used=total_support_used,
@@ -324,7 +371,7 @@ def calculate_term_hours(
 
     # ── Expired ───────────────────────────────────────────────────────────────
     total_support_allocated = (
-        config.term_months * term.monthly_hours + term.migrated_support_hours
+        config.term_months * monthly_allocation + migrated_support
     )
     remaining_support = total_support_allocated - total_support_used
     support_overage = max(-remaining_support, 0)
@@ -348,56 +395,59 @@ def calculate_term_hours(
 # ─────────────────────────────────────────────────────────| Renewal helpers |──
 
 
-def compute_converted_dev_hours(
-    remaining_support: float,
+def compute_converted_dev_minutes(
+    remaining_support: int,
     config: HoursConfig | None = None,
-) -> float:
-    """Converts unused support hours into development hours.
+) -> int:
+    """Converts unused support minutes into development minutes.
 
     Args:
-        remaining_support (float): Unused support hours carried over from
+        remaining_support (int): Unused support minutes carried over from
             the previous term. Negative values are treated as 0.
         config (HoursConfig | None, optional): Hours config. Defaults to
             None, in which case `get_hours_config()` is used.
 
     Returns:
-        float: Development hours granted for the new term.
+        int: Development minutes granted for the new term, rounded to
+            the nearest minute.
     """
 
     if config is None:
         config = get_hours_config()
 
-    return max(remaining_support, 0) / config.dev_conversion_ratio
+    return round(max(remaining_support, 0) / config.dev_conversion_ratio)
 
 
-def compute_migrated_support_hours(
-    remaining_support: float,
+def compute_migrated_support_minutes(
+    remaining_support: int,
     config: HoursConfig | None = None,
-) -> float:
-    """Caps unused support hours eligible for migration to the next term.
+) -> int:
+    """Caps unused support minutes eligible for migration to the next term.
 
     Args:
-        remaining_support (float): Unused support hours carried over from
+        remaining_support (int): Unused support minutes carried over from
             the previous term. Negative values are treated as 0.
         config (HoursConfig | None, optional): Hours config. Defaults to
             None, in which case `get_hours_config()` is used.
 
     Returns:
-        float: Support hours migrated forward, capped at
-            `config.max_migrate_hours`.
+        int: Support minutes migrated forward, capped at
+            `config.max_migrate_hours` (converted to minutes).
     """
 
     if config is None:
         config = get_hours_config()
 
-    return min(max(remaining_support, 0), config.max_migrate_hours)
+    max_migrate_minutes = round(config.max_migrate_hours * 60)
+
+    return min(max(remaining_support, 0), max_migrate_minutes)
 
 
 # ─────────────────────────────────────────────────| Overage billing helpers |──
 
 
-def billed_overage(billings, entry_type: str) -> float:
-    """Sums hours already billed for a given entry type.
+def billed_overage(billings, entry_type: str) -> int:
+    """Sums minutes already billed for a given entry type.
 
     Args:
         billings: Iterable of OverageBilling instances.
@@ -405,26 +455,28 @@ def billed_overage(billings, entry_type: str) -> float:
             "DEVELOPMENT".
 
     Returns:
-        float: Total hours charged across `billings` matching
+        int: Total minutes charged across `billings` matching
             `entry_type`.
     """
 
-    return sum(b.hours_charged for b in billings if b.type == entry_type)
+    return sum(
+        hm_to_minutes(b.hours_charged, b.minutes_charged)
+        for b in billings
+        if b.type == entry_type
+    )
 
 
-def unbilled_overage(
-    computed_overage: float, billings, entry_type: str
-) -> float:
-    """Computes overage hours not yet billed.
+def unbilled_overage(computed_overage: int, billings, entry_type: str) -> int:
+    """Computes overage minutes not yet billed.
 
     Args:
-        computed_overage (float): Overage hours computed for the term.
+        computed_overage (int): Overage minutes computed for the term.
         billings: Iterable of OverageBilling instances.
         entry_type (str): TimeEntry type to filter by, "SUPPORT" or
             "DEVELOPMENT".
 
     Returns:
-        float: `computed_overage` minus hours already billed, floored
+        int: `computed_overage` minus minutes already billed, floored
             at 0.
     """
 
