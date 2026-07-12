@@ -1,3 +1,17 @@
+## v0.1.0-alpha.6 (2026-07-12)
+
+### Features
+
+- **templates/dashboard/base**: add sidebar logo
+- **static/images/ico**: include static images and meta ico
+- **static/images/ico**: add ico generator from svg
+- **static/images**: add icons
+- **tracker**: support multiple retainers per client
+
+### Refactoring
+
+- **static/images**: update icons
+
 ## v0.1.0-alpha.5 (2026-07-12)
 
 ### Bug Fixes
