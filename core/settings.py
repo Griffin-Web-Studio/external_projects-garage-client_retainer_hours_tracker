@@ -155,10 +155,11 @@ USE_TZ = True
 
 STATIC_URL = app_env.static_url
 STATIC_ROOT = BASE_DIR / "staticfiles"
-# Only static/build (pnpm build's compiled output) is servable. static/src
-# is Tailwind CLI *input* - its raw `@import "tailwindcss" source(...)`
-# directive isn't a real browser-resolvable path, so collectstatic's
-# post-processor chokes on it if this points at the whole static/ dir.
+# static/build (pnpm build's compiled output) and static/images (checked-in
+# icons/logos) are servable. static/src is Tailwind CLI *input* - its raw
+# `@import "tailwindcss" source(...)` directive isn't a real
+# browser-resolvable path, so collectstatic's post-processor chokes on it
+# if this points at the whole static/ dir.
 #
 # static/build only exists while there's a compiled-CSS source to collect
 # from (local dev after `pnpm build`, or the Docker build stage that runs
@@ -167,7 +168,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # contents into STATIC_ROOT by then - nothing at runtime reads from it
 # again, so there's nothing to point STATICFILES_DIRS at.
 _static_build_dir = BASE_DIR / "static" / "build"
-STATICFILES_DIRS = [_static_build_dir] if _static_build_dir.is_dir() else []
+_static_images_dir = BASE_DIR / "static" / "images"
+STATICFILES_DIRS = [
+    d for d in (_static_build_dir, _static_images_dir) if d.is_dir()
+]
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
