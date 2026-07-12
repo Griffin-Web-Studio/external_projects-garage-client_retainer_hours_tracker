@@ -1,3 +1,14 @@
+## v0.1.0-alpha.4 (2026-07-12)
+
+### Bug Fixes
+
+- **static**: guard STATICFILES_DIRS behind static/build existing
+
+### Refactoring
+
+- split hours field into hours and minutes
+- **docker:compose:coolify**: correct template bug
+
 ## v0.1.0-alpha.3 (2026-07-10)
 
 ### Features
