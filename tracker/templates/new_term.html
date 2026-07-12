@@ -1,16 +1,16 @@
 {% extends "dashboard/base.html" %}
 {% load hours_tags %}
 
-{% block title %}Renew Term - {{ client.name }} - {{ APP_NAME }}{% endblock %}
+{% block title %}Renew Term - {{ retainer.name }} - {{ client.name }} - {{ APP_NAME }}{% endblock %}
 
 {% block view_body %}
   <div class="max-w-lg space-y-6">
     <div>
-      <a href="{% url 'client-detail' client.pk %}"
+      <a href="{% url 'retainer-detail' client.pk retainer.pk %}"
          class="text-slate-400 hover:text-slate-200 text-sm
                 transition-colors"
       >
-        &larr; {{ client.name }}
+        &larr; {{ retainer.name }}
       </a>
 
       <h1 class="text-2xl font-semibold text-white mt-2">Renew Term</h1>
@@ -159,7 +159,7 @@
       </div>
 
       <div class="flex items-center justify-end gap-3">
-        <a href="{% url 'client-detail' client.pk %}"
+        <a href="{% url 'retainer-detail' client.pk retainer.pk %}"
            class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200
                   transition-colors"
         >

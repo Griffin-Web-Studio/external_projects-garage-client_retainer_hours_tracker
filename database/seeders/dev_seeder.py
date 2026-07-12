@@ -1,3 +1,5 @@
+import random
+
 from django.conf import settings
 from django.core.management.base import OutputWrapper
 from factory.django import DjangoModelFactory
@@ -5,6 +7,7 @@ from factory.django import DjangoModelFactory
 from database.factories.client_factory import (
     ClientFactory,
     ClientTermFactory,
+    RetainerFactory,
     TimeEntryFactory,
 )
 from database.factories.employee_factory import (
@@ -73,26 +76,40 @@ class DevSeeder:
         num_entries: int,
     ) -> None:
         entries_per_client = max(1, num_entries // num_clients)
+        retainer_names = [
+            "Support Retainer",
+            "Design Retainer",
+            "Development Retainer",
+        ]
 
         for i in range(num_clients):
             client = ClientFactory()
-            term = ClientTermFactory(client=client)
+            names = random.sample(retainer_names, random.choice([1, 1, 2]))
+            entries_per_retainer = max(1, entries_per_client // len(names))
 
-            self._log(
-                stdout,
-                f"  ✔️ Client: {client.name} ({term.monthly_hours}h/mo)",
-            )
+            self._log(stdout, f"  ✔️ Client: {client.name}")
 
-            for _ in range(entries_per_client):
-                TimeEntryFactory(
-                    client=client,
-                    term=term,
-                    employee=employees[i % len(employees)],
+            for name in names:
+                retainer = RetainerFactory(client=client, name=name)
+                term = ClientTermFactory(retainer=retainer)
+
+                self._log(
+                    stdout,
+                    f"    └─ Retainer: {retainer.name}"
+                    f" ({term.monthly_hours}h/mo)",
                 )
 
-            self._log(
-                stdout,
-                f"    └─ {entries_per_client} time"
-                f" {'entry' if entries_per_client == 1 else 'entries'}"
-                f" logged",
-            )
+                for _ in range(entries_per_retainer):
+                    TimeEntryFactory(
+                        retainer=retainer,
+                        client=client,
+                        term=term,
+                        employee=employees[i % len(employees)],
+                    )
+
+                self._log(
+                    stdout,
+                    f"        {entries_per_retainer} time"
+                    f" {'entry' if entries_per_retainer == 1 else 'entries'}"
+                    f" logged",
+                )

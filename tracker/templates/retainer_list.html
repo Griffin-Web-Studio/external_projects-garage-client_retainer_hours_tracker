@@ -1,0 +1,41 @@
+{% extends "dashboard/base.html" %}
+{% load hours_tags %}
+
+{% block title %}Retainers - {{ APP_NAME }}{% endblock %}
+
+{% block view_body %}
+  <div class="space-y-8">
+
+    {# Header #}
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-white">Retainers</h1>
+        <p class="text-sm text-slate-400 mt-0.5">
+          {{ retainer_data|length }}
+          active retainer{{ retainer_data|length|pluralize }}, most
+          urgent first
+        </p>
+      </div>
+    </div>
+
+    {# Retainer list #}
+    {% if not retainer_data %}
+      <div class="text-center py-20 text-slate-500">
+        <p class="text-lg">No active retainers yet.</p>
+        <a href="{% url 'client-list' %}"
+           class="text-secondary hover:text-secondary-alt text-sm mt-2
+                  inline-block transition-colors"
+        >
+          Go to Clients &rarr;
+        </a>
+      </div>
+    {% else %}
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {% for retainer, term, summary in retainer_data %}
+          {% include "_retainer_card.html" %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  </div>
+{% endblock %}

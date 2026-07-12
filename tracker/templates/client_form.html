@@ -14,10 +14,8 @@
 
       <h1 class="text-2xl font-semibold text-white mt-2">{{ title }}</h1>
 
-      {% if not client %}
-        <p class="text-sm text-slate-400 mt-0.5">
-          Creates the client and their first {{ term_months }}-month term.
-        </p>
+      {% if intro_text %}
+        <p class="text-sm text-slate-400 mt-0.5">{{ intro_text }}</p>
       {% endif %}
     </div>
 
@@ -65,7 +63,7 @@
                       text-primary text-sm font-medium rounded-full
                       transition-colors"
         >
-          {% if client %}Save Changes{% else %}Create Client{% endif %}
+          {{ submit_label }}
         </button>
       </div>
     </form>

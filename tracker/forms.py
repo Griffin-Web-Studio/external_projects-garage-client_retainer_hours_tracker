@@ -40,11 +40,14 @@ def _validate_min_duration(
 
 
 class NewClientForm(forms.Form):
-    """Form for creating a new client and their first term.
+    """Form for creating a new client, their first retainer, and its
+    first term.
 
     Attributes:
         name (CharField): Client's display name.
-        start_date (DateField): Start date of the client's first term.
+        retainer_name (CharField): Display name for the client's first
+            retainer.
+        start_date (DateField): Start date of the retainer's first term.
         monthly_hours (IntegerField): Whole support hours granted per
             calendar month.
         monthly_minutes (IntegerField): Additional support minutes (0-59)
@@ -55,6 +58,12 @@ class NewClientForm(forms.Form):
     name = forms.CharField(
         max_length=200,
         widget=forms.TextInput(attrs={"placeholder": "Acme Ltd"}),
+    )
+    retainer_name = forms.CharField(
+        max_length=200,
+        label="Retainer name",
+        initial="Support Retainer",
+        widget=forms.TextInput(attrs={"placeholder": "Support Retainer"}),
     )
     start_date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date"}),
@@ -91,6 +100,68 @@ class NewClientForm(forms.Form):
             cleaned_data, "monthly_hours", "monthly_minutes", 30
         )
         return cleaned_data
+
+
+class NewRetainerForm(forms.Form):
+    """Form for adding a new retainer contract to an existing client.
+
+    Attributes:
+        name (CharField): Retainer's display name.
+        start_date (DateField): Start date of the retainer's first term.
+        monthly_hours (IntegerField): Whole support hours granted per
+            calendar month.
+        monthly_minutes (IntegerField): Additional support minutes (0-59)
+            granted per calendar month.
+    """
+
+    name = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={"placeholder": "Design Retainer"}),
+    )
+    start_date = forms.DateField(
+        widget=forms.DateInput(attrs={"type": "date"}),
+        initial=date.today,
+    )
+    monthly_hours = forms.IntegerField(
+        min_value=0,
+        label="Monthly support hours",
+        widget=forms.NumberInput(attrs={"placeholder": "10"}),
+    )
+    monthly_minutes = forms.IntegerField(
+        min_value=0,
+        max_value=59,
+        label="Monthly support minutes",
+        initial=0,
+        widget=forms.NumberInput(attrs={"placeholder": "0"}),
+    )
+
+    def clean(self):
+        """Validates that the combined monthly hours/minutes is >= 30 min.
+
+        Returns:
+            dict: The form's cleaned data.
+        """
+
+        cleaned_data = super().clean()
+        _validate_min_duration(
+            cleaned_data, "monthly_hours", "monthly_minutes", 30
+        )
+        return cleaned_data
+
+
+class EditRetainerForm(forms.Form):
+    """Form for editing an existing retainer's name and status.
+
+    Attributes:
+        name (CharField): Retainer's display name.
+        is_active (ChoiceField): Whether the retainer is active or
+            inactive.
+    """
+
+    name = forms.CharField(max_length=200)
+    is_active = forms.ChoiceField(
+        choices=[("true", "Active"), ("false", "Inactive")],
+    )
 
 
 class EditClientForm(forms.Form):

@@ -62,10 +62,17 @@ NAV_LINKS: list[NavLinkConfig] = [
         # No permission - every authenticated user sees the dashboard.
     },
     {
-        "name": "client-new",
-        "label": "New Client",
-        "icon": "icon_si_add_circle",
+        "name": "client-list",
+        "label": "Clients",
+        "icon": "icon_si_users_group",
         "mode": DashboardMode.NORMAL,
-        # No permission - every authenticated user can add a client.
+        # No permission - every authenticated user can view clients.
+    },
+    {
+        "name": "retainer-list",
+        "label": "Retainers",
+        "icon": "icon_si_clipboard",
+        "mode": DashboardMode.NORMAL,
+        # No permission - every authenticated user can view retainers.
     },
 ]

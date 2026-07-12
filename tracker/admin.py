@@ -1,6 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Client, ClientTerm, Employee, OverageBilling, TimeEntry
+from .models import (
+    Client,
+    ClientTerm,
+    Employee,
+    OverageBilling,
+    Retainer,
+    TimeEntry,
+)
 
 
 @admin.register(Employee)
@@ -49,10 +56,17 @@ class ClientAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
+@admin.register(Retainer)
+class RetainerAdmin(admin.ModelAdmin):
+    list_display = ("name", "client", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("name", "client__name")
+
+
 @admin.register(ClientTerm)
 class ClientTermAdmin(admin.ModelAdmin):
     list_display = (
-        "client",
+        "retainer",
         "term_number",
         "start_date",
         "end_date",
@@ -67,6 +81,7 @@ class ClientTermAdmin(admin.ModelAdmin):
 class TimeEntryAdmin(admin.ModelAdmin):
     list_display = (
         "client",
+        "retainer",
         "date",
         "hours",
         "minutes",
@@ -75,7 +90,7 @@ class TimeEntryAdmin(admin.ModelAdmin):
         "description",
     )
     list_filter = ("type",)
-    search_fields = ("client__name", "description")
+    search_fields = ("client__name", "retainer__name", "description")
 
 
 @admin.register(OverageBilling)

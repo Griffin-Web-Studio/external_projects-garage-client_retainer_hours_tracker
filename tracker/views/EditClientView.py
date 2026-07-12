@@ -30,16 +30,7 @@ class EditClientView(LoginRequiredMixin, View):
             }
         )
 
-        return render(
-            request,
-            "client_form.html",
-            {
-                "form": form,
-                "title": f"Edit - {client.name}",
-                "client": client,
-                "back_url": f"/clients/{client.pk}/",
-            },
-        )
+        return render(request, "client_form.html", self._context(client, form))
 
     def post(self, request, pk):
         """Validates and applies the submitted changes to the client.
@@ -64,13 +55,22 @@ class EditClientView(LoginRequiredMixin, View):
 
             return redirect("client-detail", pk=client.pk)
 
-        return render(
-            request,
-            "client_form.html",
-            {
-                "form": form,
-                "title": f"Edit - {client.name}",
-                "client": client,
-                "back_url": f"/clients/{client.pk}/",
-            },
-        )
+        return render(request, "client_form.html", self._context(client, form))
+
+    def _context(self, client, form):
+        """Builds the shared client_form.html context.
+
+        Args:
+            client (Client): Client being edited.
+            form (EditClientForm): Bound or unbound form to render.
+
+        Returns:
+            dict: Context for rendering client_form.html.
+        """
+
+        return {
+            "form": form,
+            "title": f"Edit - {client.name}",
+            "submit_label": "Save Changes",
+            "back_url": f"/clients/{client.pk}/",
+        }

@@ -139,6 +139,36 @@ class Client(models.Model):
     def __str__(self):
         return self.name
 
+
+# ────────────────────────────────────────────────────────────────| Retainer |──
+class Retainer(models.Model):
+    """Retainer model - one independent retainer contract for a client.
+
+    A client can have multiple retainers running in parallel (e.g. a
+    "Support Retainer" and a "Design Retainer"), each with its own term
+    timeline, monthly hour allocation, and carryover rules.
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        Retainer: Retainer model
+    """
+
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="retainers"
+    )
+    name = models.CharField(max_length=200)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.client.name} — {self.name}"
+
     @property
     def current_term(self):
         return self.terms.order_by("-term_number").first()
@@ -152,7 +182,7 @@ class Client(models.Model):
         Returns:
             ClientTerm | None: The term with `start_date <= entry_date <=
                 end_date`, or None if no term covers that date (e.g. a
-                historical date from before the client's first term).
+                historical date from before this retainer's first term).
         """
 
         return self.terms.filter(
@@ -183,8 +213,8 @@ class ClientTerm(models.Model):
         (CARRY_MIGRATE, "Migrate support hours forward (max 6h)"),
     ]
 
-    client = models.ForeignKey(
-        Client, on_delete=models.CASCADE, related_name="terms"
+    retainer = models.ForeignKey(
+        Retainer, on_delete=models.CASCADE, related_name="terms"
     )
     term_number = models.PositiveIntegerField()
     start_date = models.DateField()
@@ -213,11 +243,11 @@ class ClientTerm(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = [["client", "term_number"]]
+        unique_together = [["retainer", "term_number"]]
         ordering = ["term_number"]
 
     def __str__(self):
-        return f"{self.client.name} — Term {self.term_number}"
+        return f"{self.retainer} — Term {self.term_number}"
 
 
 # ───────────────────────────────────────────────────────────────| TimeEntry |──
@@ -238,12 +268,18 @@ class TimeEntry(models.Model):
         (TYPE_DEVELOPMENT, "Development"),
     ]
 
+    # Denormalized - must always equal `retainer.client`. Kept alongside
+    # `retainer` for convenient client-scoped queries (e.g. historical
+    # entries across all of a client's retainers).
     client = models.ForeignKey(
         Client, on_delete=models.CASCADE, related_name="time_entries"
     )
-    # Null when the entry's date falls outside every term the client has
-    # ever had (e.g. historical work logged from before the client was
-    # onboarded) - such entries don't count toward any term's hours.
+    retainer = models.ForeignKey(
+        Retainer, on_delete=models.CASCADE, related_name="time_entries"
+    )
+    # Null when the entry's date falls outside every term this retainer
+    # has ever had (e.g. historical work logged from before the retainer
+    # was set up) - such entries don't count toward any term's hours.
     term = models.ForeignKey(
         ClientTerm,
         on_delete=models.CASCADE,

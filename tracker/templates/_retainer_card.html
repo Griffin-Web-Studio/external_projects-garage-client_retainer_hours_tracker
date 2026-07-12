@@ -1,0 +1,109 @@
+{% load hours_tags %}
+{# Expects `retainer`, `term`, and `summary` in context. #}
+<a href="{% url 'retainer-detail' retainer.client_id retainer.pk %}"
+   class="block group"
+>
+  <div class="bg-white/5 border border-secondary/20 rounded-2xl p-5
+              hover:border-secondary/40 transition-colors"
+  >
+
+    {# Top row #}
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div class="min-w-0">
+        <h2 class="font-semibold text-white truncate
+                  group-hover:text-secondary transition-colors"
+        >
+          {{ retainer.client.name }}
+          <span class="text-slate-500 font-normal">&middot;</span>
+          {{ retainer.name }}
+        </h2>
+
+        {% if term %}
+          <p class="text-xs text-slate-400 mt-0.5">
+            Term {{ term.term_number }} -
+            {{ term.start_date|date:"j M Y" }}
+            &ndash; {{ term.end_date|date:"j M Y" }}
+          </p>
+        {% endif %}
+      </div>
+
+      <div class="shrink-0">
+        {% if not term %}
+          <span class="text-xs text-slate-500">No term</span>
+        {% elif summary.status == 'expired' %}
+          <span class="px-2 py-0.5 rounded-full text-xs
+                      font-medium bg-slate-700/50
+                      text-slate-400 ring-1 ring-white/10"
+          >
+            Expired
+          </span>
+        {% else %}
+          <span class="px-2 py-0.5 rounded-full text-xs
+                      font-medium
+                      {{ summary.hours_status|status_badge_classes }}"
+          >
+            {{ summary.hours_status|status_label }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Hours (active terms only) #}
+    {% if summary and summary.status == 'active' %}
+      <div class="flex items-end justify-between mb-2">
+        <div>
+          <span class="font-mono text-3xl font-medium
+                      text-white"
+          >
+            {{ summary.remaining_support|clamp|fmt_hm }}
+          </span>
+          <span class="text-slate-400 text-sm ml-1.5">
+            remaining
+          </span>
+        </div>
+        <span class="text-xs text-slate-500 font-mono">
+          {{ summary.total_support_used|fmt_hm }} /
+          {{ summary.total_support_allocated|fmt_hm }}
+        </span>
+      </div>
+
+      {# Progress bar #}
+      <div class="h-1.5 rounded-full overflow-hidden
+                  bg-white/10"
+      >
+        <div class="h-full rounded-full transition-all
+                    {{ summary.hours_status|hours_bar_color }}"
+             style="width: {{ summary.support_used_pct|floatformat_pct }}%"
+        ></div>
+      </div>
+
+      {# Footer metrics #}
+      <div class="flex items-center gap-4 mt-3 pt-3
+                  border-t border-white/10 text-xs
+                  text-slate-400"
+      >
+        <span class="font-mono">
+          {{ summary.monthly_allocation|fmt_hm }}
+          <span class="text-slate-500">/mo</span>
+        </span>
+        <span>Month {{ summary.months_elapsed }} of 12</span>
+        {% if summary.total_dev_available > 0 %}
+          <span class="text-secondary">
+            +{{ summary.remaining_dev|clamp|fmt_hm }} dev
+          </span>
+        {% endif %}
+        {% if summary.support_overage > 0 %}
+          <span class="text-red-400 font-medium">
+            {{ summary.support_overage|fmt_hm }} overage
+          </span>
+        {% endif %}
+      </div>
+
+    {% elif summary and summary.status == 'expired' %}
+      <p class="text-xs text-amber-400 mt-2">
+        Term ended &mdash; ready for renewal &rarr;
+      </p>
+    {% endif %}
+
+  </div>
+</a>

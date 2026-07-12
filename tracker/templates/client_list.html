@@ -1,0 +1,100 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Clients - {{ APP_NAME }}{% endblock %}
+
+{% block view_body %}
+  <div class="space-y-8">
+
+    {# Header #}
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-white">Clients</h1>
+        <p class="text-sm text-slate-400 mt-0.5">
+          {{ clients|length }} client{{ clients|length|pluralize }}
+        </p>
+      </div>
+
+      <a href="{% url 'client-new' %}"
+         class="inline-flex items-center gap-2 px-4 py-2 bg-secondary
+                hover:bg-secondary-alt text-primary text-sm font-medium
+                rounded-full transition-colors"
+      >
+        <span class="text-lg leading-none">+</span> New Client
+      </a>
+    </div>
+
+    {% if not clients %}
+      <div class="text-center py-20 text-slate-500">
+        <p class="text-lg">No clients yet.</p>
+        <a href="{% url 'client-new' %}"
+           class="text-secondary hover:text-secondary-alt text-sm mt-2
+                  inline-block transition-colors"
+        >
+          Add your first client &rarr;
+        </a>
+      </div>
+    {% else %}
+      <div class="bg-white/5 border border-secondary/20 rounded-2xl
+                  overflow-hidden"
+      >
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/10 text-xs text-slate-400
+                       uppercase tracking-wider"
+            >
+              <th class="px-4 py-3 text-left font-medium">Name</th>
+              <th class="px-4 py-3 text-left font-medium">Retainers</th>
+              <th class="px-4 py-3 text-left font-medium">Status</th>
+              <th class="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {% for client in clients %}
+              <tr class="hover:bg-white/5">
+                <td class="px-4 py-3">
+                  <a href="{% url 'client-detail' client.pk %}"
+                     class="text-white hover:text-secondary
+                            transition-colors font-medium"
+                  >
+                    {{ client.name }}
+                  </a>
+                </td>
+                <td class="px-4 py-3 text-slate-400">
+                  {{ client.retainer_count }}
+                  retainer{{ client.retainer_count|pluralize }}
+                </td>
+                <td class="px-4 py-3">
+                  {% if client.is_active %}
+                    <span class="px-2 py-0.5 rounded-full text-xs
+                                font-medium bg-emerald-500/10
+                                text-emerald-400 ring-1
+                                ring-emerald-500/20"
+                    >
+                      Active
+                    </span>
+                  {% else %}
+                    <span class="px-2 py-0.5 rounded-full text-xs
+                                font-medium bg-slate-700/50
+                                text-slate-400 ring-1 ring-white/10"
+                    >
+                      Inactive
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <a href="{% url 'client-edit' client.pk %}"
+                     class="text-xs text-slate-400 hover:text-slate-200
+                            transition-colors"
+                  >
+                    Edit
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+
+  </div>
+{% endblock %}

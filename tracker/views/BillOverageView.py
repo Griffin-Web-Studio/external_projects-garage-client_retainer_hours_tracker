@@ -3,39 +3,41 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 
 from tracker.forms import BillOverageForm
-from tracker.models import Client, OverageBilling
-from tracker.views.ClientDetailView import ClientDetailView
+from tracker.models import Client, OverageBilling, Retainer
+from tracker.views.RetainerDetailView import RetainerDetailView
 
 
 class BillOverageView(LoginRequiredMixin, View):
-    """View for recording an overage billing against a client's term."""
+    """View for recording an overage billing against a retainer's term."""
 
-    def post(self, request, pk, term_number=None):
+    def post(self, request, pk, retainer_pk, term_number=None):
         """Validates the submitted form and records the overage billing.
 
         Args:
             request (HttpRequest): Incoming POST request with form data.
-            pk (int): Primary key of the client being billed.
+            pk (int): Primary key of the owning client.
+            retainer_pk (int): Primary key of the retainer being billed.
             term_number (int | None, optional): Term to bill against.
-                Defaults to None, in which case the client's current
+                Defaults to None, in which case the retainer's current
                 (latest) term is billed.
 
         Returns:
             HttpResponse: Redirect to the billed term's detail page on
-                success or if the client has no term, otherwise the
-                client detail page re-rendered with the bill form
+                success or if the retainer has no term, otherwise the
+                retainer detail page re-rendered with the bill form
                 errors.
         """
 
         client = get_object_or_404(Client, pk=pk)
+        retainer = get_object_or_404(Retainer, pk=retainer_pk, client_id=pk)
 
         if term_number is not None:
-            term = get_object_or_404(client.terms, term_number=term_number)
+            term = get_object_or_404(retainer.terms, term_number=term_number)
         else:
-            term = client.terms.order_by("-term_number").first()
+            term = retainer.current_term
 
         if not term:
-            return redirect("client-detail", pk=pk)
+            return redirect("retainer-detail", pk=pk, retainer_pk=retainer_pk)
 
         form = BillOverageForm(request.POST)
 
@@ -52,11 +54,14 @@ class BillOverageView(LoginRequiredMixin, View):
 
             if term_number is not None:
                 return redirect(
-                    "client-detail-term", pk=pk, term_number=term_number
+                    "retainer-detail-term",
+                    pk=pk,
+                    retainer_pk=retainer_pk,
+                    term_number=term_number,
                 )
 
-            return redirect("client-detail", pk=pk)
+            return redirect("retainer-detail", pk=pk, retainer_pk=retainer_pk)
 
-        return ClientDetailView()._render(
-            request, pk, bill_form=form, term_number=term_number
+        return RetainerDetailView()._render(
+            request, pk, retainer_pk, bill_form=form, term_number=term_number
         )

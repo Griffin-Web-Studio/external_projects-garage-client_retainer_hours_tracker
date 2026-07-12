@@ -5,14 +5,15 @@ import factory
 from factory.django import DjangoModelFactory
 from faker import Faker
 
-from tracker.models import Client, ClientTerm, TimeEntry
+from database.factories.employee_factory import EmployeeFactory
+from tracker.models import Client, ClientTerm, Retainer, TimeEntry
 
 _faker = Faker()
 
 
 # ───────────────────────────────────────────────────────────| ClientFactory |──
 class ClientFactory(DjangoModelFactory):
-    """Generates a fake Client with no term attached.
+    """Generates a fake Client with no retainer attached.
 
     Args:
         DjangoModelFactory (DjangoModelFactory): Model Factory
@@ -26,10 +27,30 @@ class ClientFactory(DjangoModelFactory):
     is_active = True
 
 
+# ─────────────────────────────────────────────────────────| RetainerFactory |──
+class RetainerFactory(DjangoModelFactory):
+    """Generates a fake Retainer for a given client, with no term attached.
+
+    Args:
+        DjangoModelFactory (DjangoModelFactory): Model Factory
+    """
+
+    class Meta:
+        model = Retainer
+
+    client = factory.SubFactory(ClientFactory)
+    name = factory.LazyFunction(
+        lambda: random.choice(
+            ["Support Retainer", "Design Retainer", "Development Retainer"]
+        )
+    )
+    is_active = True
+
+
 # ───────────────────────────────────────────────────────| ClientTermFactory |──
 class ClientTermFactory(DjangoModelFactory):
-    """Generates a ClientTerm for a given client. Defaults to an active first
-    term starting ~6 months ago.
+    """Generates a ClientTerm for a given retainer. Defaults to an active
+    first term starting ~6 months ago.
 
     Args:
         DjangoModelFactory (DjangoModelFactory): Model Factory
@@ -38,7 +59,7 @@ class ClientTermFactory(DjangoModelFactory):
     class Meta:
         model = ClientTerm
 
-    client = factory.SubFactory(ClientFactory)
+    retainer = factory.SubFactory(RetainerFactory)
     term_number = 1
     start_date = factory.LazyFunction(
         lambda: date.today().replace(day=1) - timedelta(days=180)
@@ -61,8 +82,8 @@ class ClientTermFactory(DjangoModelFactory):
 
 # ────────────────────────────────────────────────────────| TimeEntryFactory |──
 class TimeEntryFactory(DjangoModelFactory):
-    """Generates a TimeEntry against a given client and term. Requires `client`,
-    `term`, and `employee` to be passed explicitly.
+    """Generates a TimeEntry against a given retainer and term. Requires
+    `retainer`, `term`, and `employee` to be passed explicitly.
 
     Args:
         DjangoModelFactory (DjangoModelFactory): Model Factory
@@ -71,9 +92,12 @@ class TimeEntryFactory(DjangoModelFactory):
     class Meta:
         model = TimeEntry
 
-    client = factory.SubFactory(ClientFactory)
-    term = factory.SubFactory(ClientTermFactory)
-    employee = factory.LazyAttribute(lambda o: o.term.client)
+    retainer = factory.SubFactory(RetainerFactory)
+    client = factory.LazyAttribute(lambda o: o.retainer.client)
+    term = factory.SubFactory(
+        ClientTermFactory, retainer=factory.SelfAttribute("..retainer")
+    )
+    employee = factory.SubFactory(EmployeeFactory)
     date = factory.LazyFunction(
         lambda: _faker.date_between(start_date="-6m", end_date="today")
     )

@@ -13,6 +13,11 @@ urlpatterns = [
         name="dashboard",
     ),
     path(
+        "clients/",
+        login_required(views.ClientListView.as_view()),
+        name="client-list",
+    ),
+    path(
         "clients/new/",
         login_required(views.NewClientView.as_view()),
         name="client-new",
@@ -28,19 +33,55 @@ urlpatterns = [
         name="client-delete",
     ),
     path(
-        "clients/<int:pk>/log/",
-        login_required(views.LogTimeView.as_view()),
-        name="log-time",
-    ),
-    path(
         "clients/<int:pk>/",
         login_required(views.ClientDetailView.as_view()),
         name="client-detail",
     ),
     path(
-        "clients/<int:pk>/terms/<int:term_number>/",
-        login_required(views.ClientDetailView.as_view()),
-        name="client-detail-term",
+        "clients/<int:pk>/retainers/new/",
+        login_required(views.NewRetainerView.as_view()),
+        name="retainer-new",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/edit/",
+        login_required(views.EditRetainerView.as_view()),
+        name="retainer-edit",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/delete/",
+        login_required(views.DeleteRetainerView.as_view()),
+        name="retainer-delete",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/",
+        login_required(views.RetainerDetailView.as_view()),
+        name="retainer-detail",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/terms/<int:term_number>/",
+        login_required(views.RetainerDetailView.as_view()),
+        name="retainer-detail-term",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/log/",
+        login_required(views.LogTimeView.as_view()),
+        name="log-time",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/new-term/",
+        login_required(views.NewTermView.as_view()),
+        name="new-term",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/bill-overage/",
+        login_required(views.BillOverageView.as_view()),
+        name="bill-overage",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/terms/"
+        "<int:term_number>/bill-overage/",
+        login_required(views.BillOverageView.as_view()),
+        name="bill-overage-term",
     ),
     path(
         "time-entries/<int:pk>/delete/",
@@ -48,18 +89,8 @@ urlpatterns = [
         name="delete-time-entry",
     ),
     path(
-        "clients/<int:pk>/new-term/",
-        login_required(views.NewTermView.as_view()),
-        name="new-term",
-    ),
-    path(
-        "clients/<int:pk>/bill-overage/",
-        login_required(views.BillOverageView.as_view()),
-        name="bill-overage",
-    ),
-    path(
-        "clients/<int:pk>/terms/<int:term_number>/bill-overage/",
-        login_required(views.BillOverageView.as_view()),
-        name="bill-overage-term",
+        "retainers/",
+        login_required(views.RetainerListView.as_view()),
+        name="retainer-list",
     ),
 ]

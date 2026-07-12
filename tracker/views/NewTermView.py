@@ -14,17 +14,20 @@ from tracker.hours import (
     get_hours_config,
     minutes_to_hm,
 )
-from tracker.models import Client, ClientTerm
+from tracker.models import Client, ClientTerm, Retainer
 
 
 class NewTermView(LoginRequiredMixin, View):
-    """View for renewing a client's expired term with a carryover choice."""
+    """View for renewing a retainer's expired term with a carryover
+    choice.
+    """
 
-    def _get_context(self, client, term, summary, cfg, form=None):
+    def _get_context(self, client, retainer, term, summary, cfg, form=None):
         """Builds the template context shared by GET and POST.
 
         Args:
-            client (Client): Client whose term is being renewed.
+            client (Client): Client the retainer belongs to.
+            retainer (Retainer): Retainer whose term is being renewed.
             term (ClientTerm): The expired term being renewed.
             summary (ExpiredTermSummary): Hours summary for `term`.
             cfg (HoursConfig): Business config for hours calculations.
@@ -40,6 +43,7 @@ class NewTermView(LoginRequiredMixin, View):
 
         return {
             "client": client,
+            "retainer": retainer,
             "term": term,
             "summary": summary,
             "remaining": remaining,
@@ -56,72 +60,80 @@ class NewTermView(LoginRequiredMixin, View):
             "fmt_hm": fmt_hm,
         }
 
-    def _get_expired(self, pk, cfg):
-        """Loads a client's latest term and its summary, if expired.
+    def _get_expired(self, pk, retainer_pk, cfg):
+        """Loads a retainer's latest term and its summary, if expired.
 
         Args:
-            pk (int): Primary key of the client.
+            pk (int): Primary key of the owning client.
+            retainer_pk (int): Primary key of the retainer.
             cfg (HoursConfig): Business config for hours calculations.
 
         Returns:
-            tuple: `(client, term, summary)`. `term` and `summary` are
-                None if the client has no term yet.
+            tuple: `(client, retainer, term, summary)`. `term` and
+                `summary` are None if the retainer has no term yet.
         """
 
         client = get_object_or_404(Client, pk=pk)
-        term = client.terms.order_by("-term_number").first()
+        retainer = get_object_or_404(Retainer, pk=retainer_pk, client_id=pk)
+        term = retainer.current_term
 
         if not term:
-            return client, None, None
+            return client, retainer, None, None
 
         entries = list(term.time_entries.all())
         summary = calculate_term_hours(term, entries, cfg)
 
-        return client, term, summary
+        return client, retainer, term, summary
 
-    def get(self, request, pk):
-        """Renders the renewal form for a client's expired term.
+    def get(self, request, pk, retainer_pk):
+        """Renders the renewal form for a retainer's expired term.
 
         Args:
             request (HttpRequest): Incoming GET request.
-            pk (int): Primary key of the client to renew.
+            pk (int): Primary key of the owning client.
+            retainer_pk (int): Primary key of the retainer to renew.
 
         Returns:
             HttpResponse: Rendered new_term.html, or a redirect to the
-                client's detail page if there's no term or the current
-                term hasn't expired yet.
+                retainer's detail page if there's no term or the
+                current term hasn't expired yet.
         """
 
         cfg = get_hours_config()
-        client, term, summary = self._get_expired(pk, cfg)
+        client, retainer, term, summary = self._get_expired(
+            pk, retainer_pk, cfg
+        )
 
         if not term or summary.status != "expired":
-            return redirect("client-detail", pk=pk)
+            return redirect("retainer-detail", pk=pk, retainer_pk=retainer_pk)
 
         return render(
             request,
             "new_term.html",
-            self._get_context(client, term, summary, cfg),
+            self._get_context(client, retainer, term, summary, cfg),
         )
 
-    def post(self, request, pk):
+    def post(self, request, pk, retainer_pk):
         """Validates the renewal form and creates the new term.
 
         Args:
             request (HttpRequest): Incoming POST request with form data.
-            pk (int): Primary key of the client to renew.
+            pk (int): Primary key of the owning client.
+            retainer_pk (int): Primary key of the retainer to renew.
 
         Returns:
-            HttpResponse: Redirect to the client's detail page on
+            HttpResponse: Redirect to the retainer's detail page on
                 success or if renewal isn't applicable, otherwise the
                 form re-rendered with errors.
         """
 
         cfg = get_hours_config()
-        client, term, summary = self._get_expired(pk, cfg)
+        client, retainer, term, summary = self._get_expired(
+            pk, retainer_pk, cfg
+        )
 
         if not term or summary.status != "expired":
-            return redirect("client-detail", pk=pk)
+            return redirect("retainer-detail", pk=pk, retainer_pk=retainer_pk)
 
         form = NewTermForm(request.POST)
 
@@ -129,7 +141,7 @@ class NewTermView(LoginRequiredMixin, View):
             return render(
                 request,
                 "new_term.html",
-                self._get_context(client, term, summary, cfg, form),
+                self._get_context(client, retainer, term, summary, cfg, form),
             )
 
         carry_type = form.cleaned_data["carry_over_type"]
@@ -153,7 +165,7 @@ class NewTermView(LoginRequiredMixin, View):
         new_end = add_months(new_start, cfg.term_months)
 
         ClientTerm.objects.create(
-            client=client,
+            retainer=retainer,
             term_number=term.term_number + 1,
             start_date=new_start,
             end_date=new_end,
@@ -166,4 +178,4 @@ class NewTermView(LoginRequiredMixin, View):
             migrated_support_minutes=migrated_support_minutes,
         )
 
-        return redirect("client-detail", pk=pk)
+        return redirect("retainer-detail", pk=pk, retainer_pk=retainer_pk)
