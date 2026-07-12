@@ -159,7 +159,15 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # is Tailwind CLI *input* - its raw `@import "tailwindcss" source(...)`
 # directive isn't a real browser-resolvable path, so collectstatic's
 # post-processor chokes on it if this points at the whole static/ dir.
-STATICFILES_DIRS = [BASE_DIR / "static" / "build"]
+#
+# static/build only exists while there's a compiled-CSS source to collect
+# from (local dev after `pnpm build`, or the Docker build stage that runs
+# collectstatic). It's gitignored and deliberately excluded from the prod
+# image (see .dockerignore) since collectstatic has already baked its
+# contents into STATIC_ROOT by then - nothing at runtime reads from it
+# again, so there's nothing to point STATICFILES_DIRS at.
+_static_build_dir = BASE_DIR / "static" / "build"
+STATICFILES_DIRS = [_static_build_dir] if _static_build_dir.is_dir() else []
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
