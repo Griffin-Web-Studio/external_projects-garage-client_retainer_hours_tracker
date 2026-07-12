@@ -10,22 +10,29 @@ from tracker.views.ClientDetailView import ClientDetailView
 class BillOverageView(LoginRequiredMixin, View):
     """View for recording an overage billing against a client's term."""
 
-    def post(self, request, pk):
+    def post(self, request, pk, term_number=None):
         """Validates the submitted form and records the overage billing.
 
         Args:
             request (HttpRequest): Incoming POST request with form data.
             pk (int): Primary key of the client being billed.
+            term_number (int | None, optional): Term to bill against.
+                Defaults to None, in which case the client's current
+                (latest) term is billed.
 
         Returns:
-            HttpResponse: Redirect to the client's detail page on
+            HttpResponse: Redirect to the billed term's detail page on
                 success or if the client has no term, otherwise the
                 client detail page re-rendered with the bill form
                 errors.
         """
 
         client = get_object_or_404(Client, pk=pk)
-        term = client.terms.order_by("-term_number").first()
+
+        if term_number is not None:
+            term = get_object_or_404(client.terms, term_number=term_number)
+        else:
+            term = client.terms.order_by("-term_number").first()
 
         if not term:
             return redirect("client-detail", pk=pk)
@@ -43,6 +50,13 @@ class BillOverageView(LoginRequiredMixin, View):
                 notes=form.cleaned_data.get("notes") or "",
             )
 
+            if term_number is not None:
+                return redirect(
+                    "client-detail-term", pk=pk, term_number=term_number
+                )
+
             return redirect("client-detail", pk=pk)
 
-        return ClientDetailView()._render(request, pk, bill_form=form)
+        return ClientDetailView()._render(
+            request, pk, bill_form=form, term_number=term_number
+        )

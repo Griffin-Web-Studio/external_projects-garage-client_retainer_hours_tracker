@@ -38,6 +38,11 @@ urlpatterns = [
         name="client-detail",
     ),
     path(
+        "clients/<int:pk>/terms/<int:term_number>/",
+        login_required(views.ClientDetailView.as_view()),
+        name="client-detail-term",
+    ),
+    path(
         "time-entries/<int:pk>/delete/",
         login_required(views.DeleteTimeEntryView.as_view()),
         name="delete-time-entry",
@@ -51,5 +56,10 @@ urlpatterns = [
         "clients/<int:pk>/bill-overage/",
         login_required(views.BillOverageView.as_view()),
         name="bill-overage",
+    ),
+    path(
+        "clients/<int:pk>/terms/<int:term_number>/bill-overage/",
+        login_required(views.BillOverageView.as_view()),
+        name="bill-overage-term",
     ),
 ]

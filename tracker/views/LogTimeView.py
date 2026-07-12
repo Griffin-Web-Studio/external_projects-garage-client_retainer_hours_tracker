@@ -40,34 +40,51 @@ class LogTimeView(LoginRequiredMixin, View):
     def post(self, request, pk):
         """Validates the submitted form and creates the time entry.
 
+        The entry is attached to whichever term's date range actually
+        covers the entered date - not necessarily the client's current
+        term. Dates that predate every term (e.g. historical work logged
+        for a client who existed before being tracked here) are saved
+        with no term and excluded from every term's hour totals.
+
         Args:
             request (HttpRequest): Incoming POST request with form data.
             pk (int): Primary key of the client to log time against.
 
         Returns:
-            HttpResponse: Redirect to the client's detail page on
-                success or if the client has no term, otherwise the
-                form re-rendered with errors.
+            HttpResponse: Redirect to the detail page of the term the
+                entry landed in (or the client's current term page if it
+                has no matching term) on success or if the client has no
+                term at all, otherwise the form re-rendered with errors.
         """
 
         client = get_object_or_404(Client, pk=pk)
-        term = client.terms.order_by("-term_number").first()
+        current_term = client.terms.order_by("-term_number").first()
         form = LogTimeForm(request.POST)
 
-        if not term:
+        if not current_term:
             return redirect("client-detail", pk=pk)
 
         if form.is_valid():
+            entry_date = form.cleaned_data["date"]
+            matched_term = client.term_for_date(entry_date)
+
             TimeEntry.objects.create(
                 client=client,
-                term=term,
+                term=matched_term,
                 employee=request.user,
-                date=form.cleaned_data["date"],
+                date=entry_date,
                 hours=form.cleaned_data["hours"],
                 minutes=form.cleaned_data["minutes"],
                 type=form.cleaned_data["type"],
                 description=form.cleaned_data["description"],
             )
+
+            if matched_term and matched_term.pk != current_term.pk:
+                return redirect(
+                    "client-detail-term",
+                    pk=pk,
+                    term_number=matched_term.term_number,
+                )
 
             return redirect("client-detail", pk=pk)
 
@@ -76,7 +93,7 @@ class LogTimeView(LoginRequiredMixin, View):
             "log_time.html",
             {
                 "client": client,
-                "term": term,
+                "term": current_term,
                 "form": form,
                 "back_url": f"/clients/{client.pk}/",
             },

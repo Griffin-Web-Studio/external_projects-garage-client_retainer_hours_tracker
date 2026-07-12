@@ -18,22 +18,30 @@ from tracker.models import Client
 
 
 class ClientDetailView(LoginRequiredMixin, View):
-    """View for a client's current term status, entries, and billing."""
+    """View for a client's term status, entries, and billing.
 
-    def get(self, request, pk):
+    Shows the client's current term by default, or a specific past term
+    when `term_number` is given - past terms are read-only (no renewal
+    or "current term" actions), since they've already been superseded.
+    """
+
+    def get(self, request, pk, term_number=None):
         """Renders the client detail page.
 
         Args:
             request (HttpRequest): Incoming GET request.
             pk (int): Primary key of the client to display.
+            term_number (int | None, optional): Specific term to display.
+                Defaults to None, in which case the client's current
+                (latest) term is shown.
 
         Returns:
             HttpResponse: Rendered client_detail.html.
         """
 
-        return self._render(request, pk)
+        return self._render(request, pk, term_number=term_number)
 
-    def _render(self, request, pk, bill_form=None):
+    def _render(self, request, pk, bill_form=None, term_number=None):
         """Builds the full context and renders client_detail.html.
 
         Args:
@@ -43,15 +51,23 @@ class ClientDetailView(LoginRequiredMixin, View):
                 re-render with validation errors after a failed overage
                 billing submission. Defaults to None, in which case a
                 fresh unbound form is built.
+            term_number (int | None, optional): Specific term to display.
+                Defaults to None, in which case the client's current
+                (latest) term is shown.
 
         Returns:
-            HttpResponse: Rendered client_detail.html with the client's
-                current term summary, time entries, and billing history,
-                or a bare "no term" page if the client has no term yet.
+            HttpResponse: Rendered client_detail.html with the given
+                term's summary, time entries, and billing history, or a
+                bare "no term" page if the client has no term yet.
         """
 
         client = get_object_or_404(Client, pk=pk)
-        term = client.terms.order_by("-term_number").first()
+        current_term = client.terms.order_by("-term_number").first()
+
+        if term_number is not None:
+            term = get_object_or_404(client.terms, term_number=term_number)
+        else:
+            term = current_term
 
         if not term:
             return render(
@@ -59,6 +75,14 @@ class ClientDetailView(LoginRequiredMixin, View):
                 "client_detail.html",
                 {"client": client, "term": None},
             )
+
+        is_latest_term = term.pk == current_term.pk
+        all_terms = list(client.terms.order_by("-term_number"))
+        historical_entries = list(
+            client.time_entries.filter(term__isnull=True)
+            .select_related("employee")
+            .order_by("-date")
+        )
 
         cfg = get_hours_config()
         entries = list(
@@ -91,7 +115,14 @@ class ClientDetailView(LoginRequiredMixin, View):
         conv_dev_hours = 0
         mig_sup_hours = 0
 
-        if not is_active_term and isinstance(summary, ExpiredTermSummary):
+        # Carryover-into-renewal preview only makes sense for the term
+        # that's actually next in line for renewal - a past, non-latest
+        # expired term has already been renewed (a newer term exists).
+        if (
+            is_latest_term
+            and not is_active_term
+            and isinstance(summary, ExpiredTermSummary)
+        ):
             conv_dev_hours = compute_converted_dev_minutes(
                 summary.remaining_support_for_carryover, cfg
             )
@@ -105,6 +136,9 @@ class ClientDetailView(LoginRequiredMixin, View):
             {
                 "client": client,
                 "term": term,
+                "is_latest_term": is_latest_term,
+                "all_terms": all_terms,
+                "historical_entries": historical_entries,
                 "entries": entries,
                 "billings": billings,
                 "summary": summary,

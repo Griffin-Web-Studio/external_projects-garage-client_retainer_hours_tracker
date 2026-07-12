@@ -143,6 +143,22 @@ class Client(models.Model):
     def current_term(self):
         return self.terms.order_by("-term_number").first()
 
+    def term_for_date(self, entry_date):
+        """Finds the term whose date range covers a given date.
+
+        Args:
+            entry_date (date): Date to look up.
+
+        Returns:
+            ClientTerm | None: The term with `start_date <= entry_date <=
+                end_date`, or None if no term covers that date (e.g. a
+                historical date from before the client's first term).
+        """
+
+        return self.terms.filter(
+            start_date__lte=entry_date, end_date__gte=entry_date
+        ).first()
+
 
 # ──────────────────────────────────────────────────────────────| ClientTerm |──
 class ClientTerm(models.Model):
@@ -225,8 +241,15 @@ class TimeEntry(models.Model):
     client = models.ForeignKey(
         Client, on_delete=models.CASCADE, related_name="time_entries"
     )
+    # Null when the entry's date falls outside every term the client has
+    # ever had (e.g. historical work logged from before the client was
+    # onboarded) - such entries don't count toward any term's hours.
     term = models.ForeignKey(
-        ClientTerm, on_delete=models.CASCADE, related_name="time_entries"
+        ClientTerm,
+        on_delete=models.CASCADE,
+        related_name="time_entries",
+        null=True,
+        blank=True,
     )
     employee = models.ForeignKey(
         Employee, on_delete=models.PROTECT, related_name="time_entries"

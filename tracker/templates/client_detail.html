@@ -24,10 +24,34 @@
           <p class="text-sm text-slate-400 mt-0.5">
             Term {{ term.term_number }} - {{ term.start_date|date:"j M Y" }}
             &ndash; {{ term.end_date|date:"j M Y" }}
-            {% if client.terms.count > 1 %}
-              - {{ client.terms.count }} terms total
+            {% if not is_latest_term %}
+              <span class="text-slate-500">(past term)</span>
             {% endif %}
           </p>
+        {% endif %}
+
+        {% if all_terms|length > 1 %}
+          <div class="mt-2 flex items-center gap-2">
+            <label for="term-select"
+                   class="text-xs text-slate-500 uppercase tracking-wider"
+            >
+              Term
+            </label>
+
+            <select id="term-select"
+                    onchange="if (this.value) { window.location.href = this.value; }"
+                    class="w-auto text-xs py-1.5 pr-8"
+            >
+              {% for t in all_terms %}
+                <option value="{% if t.term_number == all_terms.0.term_number %}{% url 'client-detail' client.pk %}{% else %}{% url 'client-detail-term' client.pk t.term_number %}{% endif %}"
+                        {% if t.term_number == term.term_number %}selected{% endif %}
+                >
+                  Term {{ t.term_number }}
+                  {% if t.term_number == all_terms.0.term_number %}(current){% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         {% endif %}
 
         {% if client.notes %}
@@ -37,7 +61,7 @@
 
       {% if term %}
         <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          {% if not is_active_term %}
+          {% if not is_active_term and is_latest_term %}
             <a href="{% url 'new-term' client.pk %}"
                class="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20
                       border border-amber-500/20 text-amber-300 text-sm
@@ -186,27 +210,29 @@
             </div>
           </div>
 
-          <div class="mt-4 pt-4 border-t border-amber-500/10 text-xs
-                      text-slate-400 space-y-1"
-          >
-            <p>On renewal:</p>
-            <p>
-              &rarr; <span class="text-white">Convert:</span>
-              {{ summary.remaining_support_for_carryover|fmt_hm }} support
-              &rarr;
-              <span class="font-mono text-secondary">
-                {{ conv_dev_hours|fmt_hm }} dev hours
-              </span>
-            </p>
-            <p>
-              &rarr; <span class="text-white">Migrate:</span>
-              carry
-              <span class="font-mono text-secondary">
-                {{ mig_sup_hours|fmt_hm }}
-              </span>
-              support hours forward (max {{ max_migrate }}h)
-            </p>
-          </div>
+          {% if is_latest_term %}
+            <div class="mt-4 pt-4 border-t border-amber-500/10 text-xs
+                        text-slate-400 space-y-1"
+            >
+              <p>On renewal:</p>
+              <p>
+                &rarr; <span class="text-white">Convert:</span>
+                {{ summary.remaining_support_for_carryover|fmt_hm }} support
+                &rarr;
+                <span class="font-mono text-secondary">
+                  {{ conv_dev_hours|fmt_hm }} dev hours
+                </span>
+              </p>
+              <p>
+                &rarr; <span class="text-white">Migrate:</span>
+                carry
+                <span class="font-mono text-secondary">
+                  {{ mig_sup_hours|fmt_hm }}
+                </span>
+                support hours forward (max {{ max_migrate }}h)
+              </p>
+            </div>
+          {% endif %}
         </div>
       {% endif %}
 
@@ -249,7 +275,7 @@
 
           {# Bill overage form #}
           <form method="post"
-                action="{% url 'bill-overage' client.pk %}"
+                action="{% if is_latest_term %}{% url 'bill-overage' client.pk %}{% else %}{% url 'bill-overage-term' client.pk term.term_number %}{% endif %}"
                 class="space-y-3 pt-2 border-t border-red-500/10"
           >
             {% csrf_token %}
@@ -388,6 +414,11 @@
                      tracking-wider"
           >
             Time Entries
+            {% if not is_latest_term %}
+              <span class="normal-case text-slate-500">
+                &mdash; Term {{ term.term_number }}
+              </span>
+            {% endif %}
           </h2>
           <a href="{% url 'log-time' client.pk %}"
              class="text-xs text-secondary hover:text-secondary-alt
@@ -466,6 +497,82 @@
           </div>
         {% endif %}
       </section>
+
+      {# Historical entries - no term matches their date (e.g. work #}
+      {# logged from before the client was tracked here) #}
+      {% if historical_entries %}
+        <section class="space-y-3">
+          <h2 class="text-sm font-medium text-slate-400 uppercase
+                     tracking-wider"
+          >
+            Historical Entries
+            <span class="normal-case text-slate-500">
+              &mdash; before tracking started, not counted in any term
+            </span>
+          </h2>
+
+          <div class="bg-white/5 border border-white/10 rounded-2xl
+                      overflow-hidden"
+          >
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white/10 text-xs text-slate-400
+                           uppercase tracking-wider"
+                >
+                  <th class="px-4 py-3 text-left font-medium">Date</th>
+                  <th class="px-4 py-3 text-left font-medium">Type</th>
+                  <th class="px-4 py-3 text-left font-medium">Hours</th>
+                  <th class="px-4 py-3 text-left font-medium">
+                    Description
+                  </th>
+                  <th class="px-4 py-3 text-left font-medium">Employee</th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                {% for entry in historical_entries %}
+                  <tr class="hover:bg-white/5">
+                    <td class="px-4 py-3 text-slate-400 whitespace-nowrap">
+                      {{ entry.date|date:"j M Y" }}
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="text-xs px-1.5 py-0.5 rounded
+                                  {{ entry.type|entry_type_classes }}"
+                      >
+                        {{ entry.type }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 font-mono font-medium text-white">
+                      {{ entry.hours|hm:entry.minutes }}
+                    </td>
+                    <td class="px-4 py-3 text-slate-300 max-w-xs truncate">
+                      {{ entry.description }}
+                    </td>
+                    <td class="px-4 py-3 text-slate-400">
+                      {{ entry.employee.name }}
+                    </td>
+                    <td class="px-4 py-3">
+                      <form method="post"
+                            action="{% url 'delete-time-entry' entry.pk %}"
+                            onsubmit="return confirm('Delete this entry?')"
+                      >
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="text-slate-600 hover:text-red-400
+                                      transition-colors text-xs"
+                                title="Delete"
+                        >
+                          &#10005;
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      {% endif %}
 
       {# Danger zone #}
       <section class="pt-4 border-t border-white/5">

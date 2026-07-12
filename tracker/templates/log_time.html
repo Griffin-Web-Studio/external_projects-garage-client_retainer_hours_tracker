@@ -46,6 +46,11 @@
 
               {{ form.date }}
 
+              <p class="text-xs text-slate-500 mt-1">
+                Matched to whichever term covers this date - not
+                necessarily the current one.
+              </p>
+
               {% for error in form.date.errors %}
                 <p class="text-xs text-red-400">{{ error }}</p>
               {% endfor %}
