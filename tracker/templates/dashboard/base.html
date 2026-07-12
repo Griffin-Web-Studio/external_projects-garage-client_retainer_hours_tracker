@@ -1,4 +1,5 @@
 {% extends 'html_base.html' %}
+{% load static %}
 
 {% block content %}
   {# Sidebar #}
@@ -7,10 +8,14 @@
                 bg-primary-alt border-secondary"
   >
     {# Logo #}
-    <div class="flex items-center justify-center py-5 px-5">
+    <div class="flex items-center justify-center py-5 px-1">
       <a href="{% url 'dashboard' %}"
-        class="text-white hover:text-slate-200 transition-colors"
+        class="flex items-center gap-3 text-white hover:text-slate-200
+               transition-colors"
       >
+        <img src="{% static 'dark-icon.svg' %}" alt=""
+             class="h-13 w-13 shrink-0"
+        >
         <span class="font-semibold tracking-tight">
           {{ APP_NAME }}
         </span>
