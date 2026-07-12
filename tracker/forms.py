@@ -150,6 +150,38 @@ class LogTimeForm(forms.Form):
         ),
     )
 
+    def __init__(self, *args, **kwargs):
+        """Caps the date widget's picker at today.
+
+        Args:
+            *args: Positional arguments forwarded to `forms.Form.__init__`.
+            **kwargs: Keyword arguments forwarded to `forms.Form.__init__`.
+        """
+
+        super().__init__(*args, **kwargs)
+        self.fields["date"].widget.attrs["max"] = date.today().isoformat()
+
+    def clean_date(self):
+        """Validates that the entry's date isn't in the future.
+
+        Work that hasn't happened yet can't be logged - a future date
+        that falls within the current term's range would otherwise be
+        counted as used hours before the work is actually done.
+
+        Returns:
+            date: The cleaned date value.
+
+        Raises:
+            forms.ValidationError: If the date is after today.
+        """
+
+        entry_date = self.cleaned_data["date"]
+
+        if entry_date > date.today():
+            raise forms.ValidationError("Date can't be in the future.")
+
+        return entry_date
+
     def clean(self):
         """Validates that the combined hours/minutes is at least 15 min.
 
