@@ -1,3 +1,10 @@
+## v0.1.0-alpha.5 (2026-07-12)
+
+### Bug Fixes
+
+- **tracker**: reject future dates when logging time
+- **tracker**: attribute time entries to the term matching their date
+
 ## v0.1.0-alpha.4 (2026-07-12)
 
 ### Bug Fixes
