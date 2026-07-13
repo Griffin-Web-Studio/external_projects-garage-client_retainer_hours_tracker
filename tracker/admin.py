@@ -115,6 +115,7 @@ class HoursPurchaseAdmin(admin.ModelAdmin):
         "minutes",
         "invoice_ref",
         "resolution",
+        "from_historical_billing",
         "purchased_at",
     )
-    list_filter = ("resolution",)
+    list_filter = ("resolution", "from_historical_billing")

@@ -10,6 +10,7 @@ from tracker.hours import (
     compute_converted_dev_minutes,
     compute_migrated_support_minutes,
     display_hours_status,
+    display_purchased_remaining,
     fmt_hm,
     get_hours_config,
     minutes_to_hm,
@@ -123,6 +124,9 @@ class RetainerDetailView(LoginRequiredMixin, View):
             if is_active_term
             else None
         )
+        purchased_remaining = display_purchased_remaining(
+            summary, purchases, billings
+        )
 
         if bill_form is None:
             unbilled_hours, unbilled_minutes = minutes_to_hm(
@@ -176,6 +180,7 @@ class RetainerDetailView(LoginRequiredMixin, View):
                 "unbilled_s": unbilled_s,
                 "unbilled_d": unbilled_d,
                 "display_status": display_status,
+                "purchased_remaining": purchased_remaining,
                 "billed_s": billed_s,
                 "billed_d": billed_d,
                 "has_overage": unbilled_s > 0 or unbilled_d > 0,

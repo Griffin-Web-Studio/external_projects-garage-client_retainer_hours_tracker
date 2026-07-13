@@ -396,6 +396,11 @@ class HoursPurchase(models.Model):
         max_length=20, choices=RESOLUTION_CHOICES, blank=True
     )
 
+    # True for purchases backfilled from a pre-existing OverageBilling
+    # total rather than new money - lets display code net that portion
+    # out of the billing so it isn't counted as buffer credit twice.
+    from_historical_billing = models.BooleanField(default=False)
+
     class Meta:
         ordering = ["purchased_at"]  # oldest first - buffer is consumed FIFO
 

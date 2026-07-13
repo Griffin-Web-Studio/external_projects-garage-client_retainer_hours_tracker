@@ -674,3 +674,44 @@ def display_hours_status(
         return "low"
 
     return "healthy"
+
+
+def display_purchased_remaining(
+    summary: TermSummary, hours_purchases, billings
+) -> int:
+    """Computes the "purchased buffer remaining" figure for display,
+    folding in leftover historical billing credit.
+
+    `summary.purchased_support_remaining` only reflects explicit
+    `HoursPurchase` rows. Some of those rows (created by the one-time
+    migration that converted pre-cap over-billing into buffer records,
+    flagged via `from_historical_billing`) were carved out of an
+    existing `OverageBilling` total rather than being new money - the
+    rest of that same billing can still be sitting unspent as implicit
+    credit, netted only inside `unbilled_overage`'s subtraction and
+    otherwise invisible on the term's stat cards. This adds that
+    leftover credit to the buffer figure so it isn't hidden, without
+    double-counting the portion already represented by a
+    `from_historical_billing` purchase.
+
+    Args:
+        summary (TermSummary): The term's computed hours summary.
+        hours_purchases: Iterable of HoursPurchase instances for the
+            term.
+        billings: Iterable of OverageBilling instances for the term.
+
+    Returns:
+        int: `summary.purchased_support_remaining` plus any leftover
+            SUPPORT billing credit not already represented by a
+            `from_historical_billing` purchase.
+    """
+
+    carved = sum(
+        hm_to_minutes(p.hours, p.minutes)
+        for p in hours_purchases
+        if p.from_historical_billing
+    )
+    billed = billed_overage(billings, "SUPPORT")
+    credit = max(0, billed - summary.support_overage - carved)
+
+    return summary.purchased_support_remaining + credit
