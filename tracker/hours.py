@@ -524,6 +524,40 @@ def compute_migrated_support_minutes(
     return min(max(remaining_support, 0), max_migrate_minutes)
 
 
+def allocate_purchased_hours_usage(
+    hours_purchases: HoursPurchase, purchased_support_used: int
+) -> list[tuple[HoursPurchase, int]]:
+    """Attributes purchased-buffer consumption to individual purchases.
+
+    Draws down `purchased_support_used` minutes FIFO - oldest purchase
+    first, matching `HoursPurchase`'s default ordering - so each
+    purchase's own leftover can be resolved (refunded or carried
+    forward) individually at term renewal.
+
+    Args:
+        hours_purchases (HoursPurchase): HoursPurchase instances
+            belonging to a term, oldest first.
+        purchased_support_used (int): Total minutes drawn from the
+            combined purchased pool this term (a term summary's
+            `purchased_support_used`).
+
+    Returns:
+        list[tuple[HoursPurchase, int]]: `(purchase, remaining_minutes)`
+            pairs in the same order as `hours_purchases`.
+    """
+
+    remaining_to_consume = purchased_support_used
+    allocation = []
+
+    for purchase in hours_purchases:
+        total = hm_to_minutes(purchase.hours, purchase.minutes)
+        consumed = min(total, remaining_to_consume)
+        allocation.append((purchase, total - consumed))
+        remaining_to_consume -= consumed
+
+    return allocation
+
+
 # ─────────────────────────────────────────────────| Overage billing helpers |──
 
 

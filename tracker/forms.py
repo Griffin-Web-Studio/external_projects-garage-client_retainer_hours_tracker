@@ -5,11 +5,13 @@ from datetime import date
 from django import forms
 
 from tracker.hours import (
+    fmt_hm,
     get_max_migrate_hours,
     get_min_log_entry_minutes,
     get_min_overage_billing_minutes,
     hm_to_minutes,
 )
+from tracker.models import HoursPurchase
 
 
 def _validate_min_duration(
@@ -277,6 +279,10 @@ class LogTimeForm(forms.Form):
 class NewTermForm(forms.Form):
     """Form for renewing an expired term with a carryover choice.
 
+    Also gains one `purchase_resolution_<pk>` ChoiceField per unresolved
+    `HoursPurchase` with unused hours left on the expiring term, so the
+    renewer can choose refund-vs-carry-forward for each individually.
+
     Attributes:
         carry_over_type (ChoiceField): How unused support hours carry
             over into the new term. Choices are populated in `__init__`
@@ -299,11 +305,15 @@ class NewTermForm(forms.Form):
         label="Monthly support minutes (new term)",
     )
 
-    def __init__(self, *args, **kwargs):
-        """Populates `carry_over_type` choices from the live hours config.
+    def __init__(self, *args, unresolved_purchases=None, **kwargs):
+        """Populates `carry_over_type` choices and per-purchase fields.
 
         Args:
             *args: Positional arguments forwarded to `forms.Form.__init__`.
+            unresolved_purchases (list[tuple[HoursPurchase, int]] | None,
+                optional): `(purchase, remaining_minutes)` pairs needing
+                a refund-vs-carry-forward choice. Defaults to None (no
+                unresolved purchases on this term).
             **kwargs: Keyword arguments forwarded to `forms.Form.__init__`.
         """
 
@@ -321,6 +331,24 @@ class NewTermForm(forms.Form):
                 "forfeited)",
             ),
         ]
+
+        self.unresolved_purchases = unresolved_purchases or []
+
+        for purchase, remaining_minutes in self.unresolved_purchases:
+            self.fields[f"purchase_resolution_{purchase.pk}"] = (
+                forms.ChoiceField(
+                    choices=[
+                        (
+                            HoursPurchase.CARRIED_FORWARD,
+                            "Carry forward to new term",
+                        ),
+                        (HoursPurchase.REFUNDED, "Refund to client"),
+                    ],
+                    initial=HoursPurchase.CARRIED_FORWARD,
+                    label=f"{fmt_hm(remaining_minutes)} unused "
+                    f"({purchase.invoice_ref or 'no invoice ref'})",
+                )
+            )
 
     def clean(self):
         """Validates that the combined monthly hours/minutes is >= 30 min.
