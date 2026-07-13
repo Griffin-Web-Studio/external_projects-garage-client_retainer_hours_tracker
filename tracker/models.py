@@ -406,3 +406,60 @@ class HoursPurchase(models.Model):
 
     def __str__(self):
         return f"{self.term} — {self.hours}h{self.minutes:02d}m purchased"
+
+
+# ─────────────────────────────────────────────────────────| CompanyProfile |──
+class CompanyProfile(models.Model):
+    """CompanyProfile model - the single record describing this app's
+    operator, used as the "from" party on generated overage reports.
+
+    Always has exactly one row (pk=1) - use `get_solo()` rather than
+    `objects.get()`/`objects.first()` to access it.
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        CompanyProfile: CompanyProfile model
+    """
+
+    name = models.CharField(max_length=200)
+    logo_url = models.URLField(blank=True)
+
+    address_line1 = models.CharField(max_length=200, blank=True)
+    address_line2 = models.CharField(max_length=200, blank=True)
+    postal_code = models.CharField(max_length=20, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=50, blank=True)
+
+    vat_number = models.CharField(max_length=50, blank=True)
+    registration_number = models.CharField(max_length=50, blank=True)
+    iban = models.CharField(max_length=50, blank=True)
+    bic = models.CharField(max_length=20, blank=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Company Profile"
+        verbose_name_plural = "Company Profile"
+
+    def __str__(self):
+        return self.name or "Company Profile"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_solo(cls):
+        """Gets the singleton instance, creating a blank one if needed.
+
+        Returns:
+            CompanyProfile: The single CompanyProfile row (pk=1).
+        """
+
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

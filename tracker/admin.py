@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     Client,
     ClientTerm,
+    CompanyProfile,
     Employee,
     HoursPurchase,
     OverageBilling,
@@ -119,3 +120,33 @@ class HoursPurchaseAdmin(admin.ModelAdmin):
         "purchased_at",
     )
     list_filter = ("resolution", "from_historical_billing")
+
+
+@admin.register(CompanyProfile)
+class CompanyProfileAdmin(admin.ModelAdmin):
+    fieldsets = (
+        (None, {"fields": ("name", "logo_url")}),
+        (
+            "Address",
+            {
+                "fields": (
+                    "address_line1",
+                    "address_line2",
+                    "postal_code",
+                    "city",
+                    "country",
+                )
+            },
+        ),
+        ("Contact", {"fields": ("email", "phone")}),
+        (
+            "Registration & Banking",
+            {"fields": ("vat_number", "registration_number", "iban", "bic")},
+        ),
+    )
+
+    def has_add_permission(self, request):
+        return not CompanyProfile.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
