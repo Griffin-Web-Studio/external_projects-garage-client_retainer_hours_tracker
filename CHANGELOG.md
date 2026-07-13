@@ -1,3 +1,20 @@
+## v0.1.0-alpha.9 (2026-07-13)
+
+### Bug Fixes
+
+- **reports**: install WeasyPrint system libs, lazy-import weasyprint
+- **reports**: seed a default report template
+
+### Features
+
+- **reports**: add report generation views and UI
+- **reports**: add OverageReport model
+- **reports**: add term report rendering context builder
+- **reports**: add pluggable PDF renderer backend
+- **reports**: add ReportTemplate model and sandboxed Jinja2 engine
+- **clients**: add billing address fields
+- **reports**: add CompanyProfile singleton model
+
 ## v0.1.0-alpha.8 (2026-07-13)
 
 ### Bug Fixes
