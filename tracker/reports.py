@@ -9,7 +9,11 @@ template can't be used to run code beyond what the rendering context
 exposes.
 """
 
+from django.utils import timezone
 from jinja2.sandbox import SandboxedEnvironment
+
+from tracker.hours import calculate_term_hours, get_hours_config
+from tracker.models import ClientTerm, CompanyProfile
 
 
 def get_sandboxed_environment() -> SandboxedEnvironment:
@@ -53,3 +57,48 @@ def render_report_template(template, context: dict) -> str:
     """
 
     return render_template_string(template.content, context)
+
+
+def build_term_report_context(term: ClientTerm, config=None) -> dict:
+    """Assembles the Jinja2 rendering context for a term's overage
+    report.
+
+    Self-contained - fetches the term's entries, purchases, and
+    billings itself, along with the client's own CompanyProfile,
+    rather than requiring the caller to have them pre-fetched.
+
+    Args:
+        term (ClientTerm): Term to build a report for.
+        config (HoursConfig | None, optional): Hours config. Defaults
+            to None, in which case `get_hours_config()` is used.
+
+    Returns:
+        dict: Context for rendering a `ReportTemplate` - `company`,
+            `client`, `retainer`, `term`, `summary`, `entries`,
+            `purchases`, `billings`, and `generated_at`.
+    """
+
+    if config is None:
+        config = get_hours_config()
+
+    retainer = term.retainer
+    client = retainer.client
+
+    entries = list(
+        term.time_entries.select_related("employee").order_by("date")
+    )
+    purchases = list(term.hours_purchases.all())
+    billings = list(term.overage_billings.order_by("billed_at"))
+    summary = calculate_term_hours(term, entries, purchases, config)
+
+    return {
+        "company": CompanyProfile.get_solo(),
+        "client": client,
+        "retainer": retainer,
+        "term": term,
+        "summary": summary,
+        "entries": entries,
+        "purchases": purchases,
+        "billings": billings,
+        "generated_at": timezone.now(),
+    }
