@@ -529,3 +529,43 @@ class ReportTemplate(models.Model):
             ReportTemplate.objects.exclude(pk=self.pk).update(is_default=False)
 
         super().save(*args, **kwargs)
+
+
+# ──────────────────────────────────────────────────────────| OverageReport |──
+class OverageReport(models.Model):
+    """OverageReport model - a formal, persisted overage report PDF
+    generated for a term.
+
+    Unlike an ad-hoc preview (rendered on demand and never saved), a
+    formal report freezes the rendered PDF at generation time as a
+    historical record - it stays exactly as sent even if the
+    `ReportTemplate` or `CompanyProfile` used to build it change later.
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        OverageReport: OverageReport model
+    """
+
+    term = models.ForeignKey(
+        ClientTerm, on_delete=models.CASCADE, related_name="reports"
+    )
+    template = models.ForeignKey(
+        ReportTemplate, on_delete=models.PROTECT, related_name="reports"
+    )
+    pdf = models.BinaryField()
+    generated_by = models.ForeignKey(
+        Employee,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="generated_reports",
+    )
+    generated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-generated_at"]
+
+    def __str__(self):
+        return f"{self.term} — report generated {self.generated_at:%Y-%m-%d}"

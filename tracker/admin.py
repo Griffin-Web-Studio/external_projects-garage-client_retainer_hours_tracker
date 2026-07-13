@@ -7,6 +7,7 @@ from .models import (
     Employee,
     HoursPurchase,
     OverageBilling,
+    OverageReport,
     ReportTemplate,
     Retainer,
     TimeEntry,
@@ -158,3 +159,40 @@ class ReportTemplateAdmin(admin.ModelAdmin):
     list_display = ("name", "is_default", "updated_at")
     list_filter = ("is_default",)
     search_fields = ("name",)
+
+
+@admin.register(OverageReport)
+class OverageReportAdmin(admin.ModelAdmin):
+    list_display = (
+        "term",
+        "template",
+        "generated_by",
+        "generated_at",
+        "pdf_size_kb",
+    )
+    list_filter = ("template",)
+    exclude = ("pdf",)
+    readonly_fields = (
+        "term",
+        "template",
+        "generated_by",
+        "generated_at",
+        "pdf_size_kb",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def pdf_size_kb(self, obj):
+        """Displays the stored PDF's size in kilobytes.
+
+        Args:
+            obj (OverageReport): Row being displayed.
+
+        Returns:
+            str: `obj.pdf`'s size formatted as e.g. "42 KB".
+        """
+
+        return f"{len(obj.pdf) / 1024:.0f} KB"
+
+    pdf_size_kb.short_description = "PDF size"
