@@ -1,3 +1,9 @@
+## v0.1.0-alpha.10 (2026-07-13)
+
+### Features
+
+- **nav**: add Company Profile link for admins
+
 ## v0.1.0-alpha.9 (2026-07-13)
 
 ### Bug Fixes
