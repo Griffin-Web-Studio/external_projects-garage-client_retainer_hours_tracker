@@ -1,3 +1,8 @@
+<img align="right" width="200" src="static/images/light-icon.svg" alt="Project Icon">
+
+> [!NOTE]
+> GitHub users - this project is maintained over [on GitLab](https://gitlab.com/griffin-web-studio/garage/client-retainer-hours-tracker).
+
 # RetainerTracker
 
 Internal tool for tracking client retainer hours, time entries, and overage
