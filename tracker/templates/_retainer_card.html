@@ -92,6 +92,11 @@
             +{{ summary.remaining_dev|clamp|fmt_hm }} dev
           </span>
         {% endif %}
+        {% if summary.purchased_support_remaining > 0 %}
+          <span class="text-secondary">
+            +{{ summary.purchased_support_remaining|fmt_hm }} buffer
+          </span>
+        {% endif %}
         {% if summary.support_overage > 0 %}
           <span class="text-red-400 font-medium">
             {{ summary.support_overage|fmt_hm }} overage
