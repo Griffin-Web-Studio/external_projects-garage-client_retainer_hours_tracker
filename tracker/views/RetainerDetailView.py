@@ -95,7 +95,8 @@ class RetainerDetailView(LoginRequiredMixin, View):
             term.time_entries.select_related("employee").order_by("-date")
         )
         billings = list(term.overage_billings.order_by("-billed_at"))
-        summary = calculate_term_hours(term, entries, cfg)
+        purchases = list(term.hours_purchases.all())
+        summary = calculate_term_hours(term, entries, purchases, cfg)
 
         is_active_term = summary.status == "active"
         s_overage = getattr(summary, "support_overage", 0)

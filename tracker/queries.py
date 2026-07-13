@@ -53,7 +53,8 @@ def urgent_retainers(
             continue
 
         entries = list(term.time_entries.all())
-        summary = calculate_term_hours(term, entries, config)
+        purchases = list(term.hours_purchases.all())
+        summary = calculate_term_hours(term, entries, purchases, config)
         is_expired = summary.status == "expired"
 
         if is_expired:

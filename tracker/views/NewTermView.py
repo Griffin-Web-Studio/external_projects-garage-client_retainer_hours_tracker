@@ -81,7 +81,8 @@ class NewTermView(LoginRequiredMixin, View):
             return client, retainer, None, None
 
         entries = list(term.time_entries.all())
-        summary = calculate_term_hours(term, entries, cfg)
+        purchases = list(term.hours_purchases.all())
+        summary = calculate_term_hours(term, entries, purchases, cfg)
 
         return client, retainer, term, summary
 

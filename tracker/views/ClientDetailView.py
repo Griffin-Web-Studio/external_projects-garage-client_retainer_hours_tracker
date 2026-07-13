@@ -34,7 +34,8 @@ class ClientDetailView(LoginRequiredMixin, View):
 
             if term:
                 entries = list(term.time_entries.all())
-                summary = calculate_term_hours(term, entries, cfg)
+                purchases = list(term.hours_purchases.all())
+                summary = calculate_term_hours(term, entries, purchases, cfg)
 
             retainer_data.append((retainer, term, summary))
 

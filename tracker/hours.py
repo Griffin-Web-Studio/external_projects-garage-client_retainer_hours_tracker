@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Literal, Union
 
-from tracker.models import ClientTerm, TimeEntry
+from tracker.models import ClientTerm, HoursPurchase, TimeEntry
 
 # ───────────────────────────────────────────────────────────| Configuration |──
 
@@ -240,13 +240,21 @@ class ActiveTermSummary:
             so far, capped at the term length.
         total_support_allocated (int): Total support minutes allocated to
             date (monthly allocation x months elapsed, plus any migrated
-            minutes).
+            minutes, plus any purchased buffer minutes).
         total_support_used (int): Total support minutes logged so far.
-        remaining_support (int): Support minutes left to use; negative
-            values are clamped to 0 via `support_overage`.
+        remaining_support (int): Support minutes left to use (allocation
+            and purchased buffer combined); negative values are clamped
+            to 0 via `support_overage`.
         support_used_pct (float): Percentage of allocated support minutes
             used, capped at 100.
-        support_overage (int): Support minutes used beyond the allocation.
+        support_overage (int): Support minutes used beyond the allocation
+            and purchased buffer combined - what still needs billing.
+        purchased_support (int): Total buffer minutes bought this term
+            via `HoursPurchase`, on top of the monthly allocation.
+        purchased_support_used (int): Buffer minutes actually drawn on
+            so far - only nonzero once the ordinary allocation (monthly
+            + migrated) is exhausted.
+        purchased_support_remaining (int): Buffer minutes still unused.
         total_dev_available (int): Development minutes available from a
             previous term's conversion.
         total_dev_used (int): Development minutes logged so far.
@@ -265,6 +273,9 @@ class ActiveTermSummary:
     remaining_support: int
     support_used_pct: float
     support_overage: int
+    purchased_support: int
+    purchased_support_used: int
+    purchased_support_remaining: int
     total_dev_available: int
     total_dev_used: int
     remaining_dev: int
@@ -283,10 +294,19 @@ class ExpiredTermSummary:
         status (Literal["expired"]): Always "expired" for this summary
             type.
         total_support_allocated (int): Total support minutes allocated
-            over the full term.
+            over the full term (monthly allocation, migrated carryover,
+            and any purchased buffer combined).
         total_support_used (int): Total support minutes logged over the
             full term.
-        support_overage (int): Support minutes used beyond the allocation.
+        support_overage (int): Support minutes used beyond the allocation
+            and purchased buffer combined - what still needs billing.
+        purchased_support (int): Total buffer minutes bought this term
+            via `HoursPurchase`, on top of the monthly allocation.
+        purchased_support_used (int): Buffer minutes actually drawn on.
+        purchased_support_remaining (int): Buffer minutes left unused at
+            term end - to be refunded or carried forward at renewal, at
+            full value (not subject to the conversion ratio or
+            migration cap applied to `remaining_support_for_carryover`).
         total_dev_available (int): Development minutes available from a
             previous term's conversion.
         total_dev_used (int): Development minutes logged over the full
@@ -294,14 +314,19 @@ class ExpiredTermSummary:
         remaining_dev (int): Development minutes never used.
         dev_overage (int): Development minutes used beyond what's
             available.
-        remaining_support_for_carryover (int): Unused support minutes
-            eligible for conversion or migration into the next term.
+        remaining_support_for_carryover (int): Unused *ordinary*
+            (monthly allocation + migrated) support minutes eligible
+            for conversion or migration into the next term - excludes
+            the purchased buffer, which has its own carryover path.
     """
 
     status: Literal["expired"]
     total_support_allocated: int
     total_support_used: int
     support_overage: int
+    purchased_support: int
+    purchased_support_used: int
+    purchased_support_remaining: int
     total_dev_available: int
     total_dev_used: int
     remaining_dev: int
@@ -318,6 +343,7 @@ TermSummary = Union[ActiveTermSummary, ExpiredTermSummary]
 def calculate_term_hours(
     term: ClientTerm,
     time_entries: TimeEntry,
+    hours_purchases: HoursPurchase,
     config: HoursConfig | None = None,
 ) -> TermSummary:
     """Calculates the hours summary for a client term.
@@ -326,6 +352,8 @@ def calculate_term_hours(
         term (ClientTerm): ClientTerm instance to summarise.
         time_entries (TimeEntry): Pre-filtered TimeEntry instances
             belonging to `term`.
+        hours_purchases (HoursPurchase): Pre-filtered HoursPurchase
+            instances belonging to `term`.
         config (HoursConfig | None, optional): Hours config. Defaults to
             None, in which case `get_hours_config()` is used.
 
@@ -354,17 +382,28 @@ def calculate_term_hours(
     migrated_support = hm_to_minutes(
         term.migrated_support_hours, term.migrated_support_minutes
     )
+    purchased_support = sum(
+        hm_to_minutes(p.hours, p.minutes) for p in hours_purchases
+    )
 
     if is_active:
         elapsed = _months_between(term.start_date, today)
         months_elapsed = min(elapsed + 1, config.term_months)
 
-        total_support_allocated = (
-            months_elapsed * monthly_allocation + migrated_support
-        )
+        # "Ordinary" allocation - monthly hours plus migrated carryover,
+        # excluding the purchased buffer. Used to work out how much of
+        # the buffer (if any) has actually been drawn on, and feeds
+        # `remaining_support_for_carryover` on expiry - the buffer has
+        # its own separate carryover path (see HoursPurchase).
+        base_allocated = months_elapsed * monthly_allocation + migrated_support
+        total_support_allocated = base_allocated + purchased_support
 
         remaining_support = total_support_allocated - total_support_used
         support_overage = max(-remaining_support, 0)
+        purchased_support_used = min(
+            purchased_support, max(0, total_support_used - base_allocated)
+        )
+        purchased_support_remaining = purchased_support - purchased_support_used
         support_used_pct = (
             min(total_support_used / total_support_allocated * 100, 100)
             if total_support_allocated > 0
@@ -392,6 +431,9 @@ def calculate_term_hours(
             remaining_support=remaining_support,
             support_used_pct=support_used_pct,
             support_overage=support_overage,
+            purchased_support=purchased_support,
+            purchased_support_used=purchased_support_used,
+            purchased_support_remaining=purchased_support_remaining,
             total_dev_available=total_dev_available,
             total_dev_used=total_dev_used,
             remaining_dev=remaining_dev,
@@ -400,11 +442,15 @@ def calculate_term_hours(
         )
 
     # ── Expired ───────────────────────────────────────────────────────────────
-    total_support_allocated = (
-        config.term_months * monthly_allocation + migrated_support
-    )
+    base_allocated = config.term_months * monthly_allocation + migrated_support
+    total_support_allocated = base_allocated + purchased_support
+
     remaining_support = total_support_allocated - total_support_used
     support_overage = max(-remaining_support, 0)
+    purchased_support_used = min(
+        purchased_support, max(0, total_support_used - base_allocated)
+    )
+    purchased_support_remaining = purchased_support - purchased_support_used
 
     remaining_dev = total_dev_available - total_dev_used
     dev_overage = max(-remaining_dev, 0)
@@ -414,11 +460,16 @@ def calculate_term_hours(
         total_support_allocated=total_support_allocated,
         total_support_used=total_support_used,
         support_overage=support_overage,
+        purchased_support=purchased_support,
+        purchased_support_used=purchased_support_used,
+        purchased_support_remaining=purchased_support_remaining,
         total_dev_available=total_dev_available,
         total_dev_used=total_dev_used,
         remaining_dev=remaining_dev,
         dev_overage=dev_overage,
-        remaining_support_for_carryover=max(remaining_support, 0),
+        remaining_support_for_carryover=max(
+            base_allocated - total_support_used, 0
+        ),
     )
 
 
