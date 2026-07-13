@@ -12,8 +12,28 @@ exposes.
 from django.utils import timezone
 from jinja2.sandbox import SandboxedEnvironment
 
-from tracker.hours import calculate_term_hours, get_hours_config
+from tracker.hours import (
+    calculate_term_hours,
+    fmt_hm,
+    get_hours_config,
+    hm_to_minutes,
+)
 from tracker.models import ClientTerm, CompanyProfile
+
+
+def _hm(hours, minutes) -> str:
+    """Formats an hours/minutes field pair for Jinja2 templates.
+
+    Args:
+        hours: Whole hours.
+        minutes: Minutes (0-59).
+
+    Returns:
+        str: `hours`/`minutes` formatted as e.g. "5h", "30m", or
+            "5h 30m".
+    """
+
+    return fmt_hm(hm_to_minutes(hours, minutes))
 
 
 def get_sandboxed_environment() -> SandboxedEnvironment:
@@ -21,13 +41,19 @@ def get_sandboxed_environment() -> SandboxedEnvironment:
     templates.
 
     Autoescaping is on, since rendered output feeds directly into PDF
-    generation as HTML.
+    generation as HTML. Registers `fmt_hm`/`hm` as filters so templates
+    can format minute counts and hour/minute field pairs the same way
+    the app's own pages do, e.g. `{{ minutes|fmt_hm }}` or
+    `{{ entry.hours|hm(entry.minutes) }}`.
 
     Returns:
         SandboxedEnvironment: A fresh sandboxed Jinja2 environment.
     """
 
-    return SandboxedEnvironment(autoescape=True)
+    env = SandboxedEnvironment(autoescape=True)
+    env.filters["fmt_hm"] = fmt_hm
+    env.filters["hm"] = _hm
+    return env
 
 
 def render_template_string(source: str, context: dict) -> str:
