@@ -4,6 +4,7 @@ from .models import (
     Client,
     ClientTerm,
     Employee,
+    HoursPurchase,
     OverageBilling,
     Retainer,
     TimeEntry,
@@ -104,3 +105,16 @@ class OverageBillingAdmin(admin.ModelAdmin):
         "invoice_ref",
         "billed_at",
     )
+
+
+@admin.register(HoursPurchase)
+class HoursPurchaseAdmin(admin.ModelAdmin):
+    list_display = (
+        "term",
+        "hours",
+        "minutes",
+        "invoice_ref",
+        "resolution",
+        "purchased_at",
+    )
+    list_filter = ("resolution",)

@@ -349,3 +349,55 @@ class OverageBilling(models.Model):
             f"{self.client.name} — {self.hours_charged}h{suffix} "
             f"{self.type} billed"
         )
+
+
+# ──────────────────────────────────────────────────────────| HoursPurchase |──
+class HoursPurchase(models.Model):
+    """HoursPurchase model - extra support hours a client has paid for as
+    a buffer against overage, on top of a term's monthly allocation.
+
+    Support hours only - development overage is billed directly via
+    OverageBilling, not buffered. Consumed only once the term's ordinary
+    allocation (monthly hours + migrated carryover) is exhausted, so a
+    purchase sits untouched as a safety net until it's actually needed.
+    Kept separate from the term's normal end-of-term carryover
+    (`ClientTerm.carry_over_type`) since purchased hours are refunded or
+    carried forward at full value, not subject to the conversion ratio
+    or migration cap that applies to unused monthly allocation.
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        HoursPurchase: HoursPurchase model
+    """
+
+    REFUNDED = "REFUNDED"
+    CARRIED_FORWARD = "CARRIED_FORWARD"
+    RESOLUTION_CHOICES: list[tuple[str, str]] = [
+        (REFUNDED, "Refunded"),
+        (CARRIED_FORWARD, "Carried forward"),
+    ]
+
+    term = models.ForeignKey(
+        ClientTerm, on_delete=models.CASCADE, related_name="hours_purchases"
+    )
+    hours = models.PositiveIntegerField()
+    minutes = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(59)]
+    )
+    invoice_ref = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    purchased_at = models.DateTimeField(auto_now_add=True)
+
+    # Blank while the purchase's term is still active (or its leftover
+    # hasn't been resolved yet at renewal). Set once resolved.
+    resolution = models.CharField(
+        max_length=20, choices=RESOLUTION_CHOICES, blank=True
+    )
+
+    class Meta:
+        ordering = ["purchased_at"]  # oldest first - buffer is consumed FIFO
+
+    def __str__(self):
+        return f"{self.term} — {self.hours}h{self.minutes:02d}m purchased"
