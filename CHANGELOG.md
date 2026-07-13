@@ -1,3 +1,9 @@
+## v0.1.0-alpha.7 (2026-07-13)
+
+### Features
+
+- **hours**: make log entry and overage billing minimums configurable
+
 ## v0.1.0-alpha.6 (2026-07-12)
 
 ### Features
