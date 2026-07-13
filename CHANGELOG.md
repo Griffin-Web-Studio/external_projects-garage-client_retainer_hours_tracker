@@ -1,3 +1,18 @@
+## v0.1.0-alpha.8 (2026-07-13)
+
+### Bug Fixes
+
+- **hours**: surface leftover historical billing credit in buffer stat
+- **hours**: base overage badge/stats on net unbilled overage
+
+### Features
+
+- **tracker**: resolve leftover purchased hours at term renewal
+- **tracker**: surface purchased buffer hours on stat cards
+- **tracker**: add "Purchase Extra Hours" action for buffer support hours
+- **hours**: factor purchased buffer hours into term allocation
+- **tracker**: add HoursPurchase model for prepaid overage buffer hours
+
 ## v0.1.0-alpha.7 (2026-07-13)
 
 ### Features
