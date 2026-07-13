@@ -149,6 +149,14 @@ test:
     - job: check:nightly
       optional: true # doesn't exist outside scheduled pipelines
   before_script:
+    # WeasyPrint (PDF report generation) needs these system libraries -
+    # not part of the base python:3.14-slim image. Package names are
+    # stable across Debian releases; apt resolves whatever
+    # libglib2.0-0/-0t64 variant that release actually needs as a
+    # transitive dependency of libpango-1.0-0.
+    - apt-get update -qq
+    - apt-get install -y --no-install-recommends -qq
+      libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libfontconfig1
     - pip install uv --quiet
     - cp .env.example .env
     - cp settings.example.ini settings.ini

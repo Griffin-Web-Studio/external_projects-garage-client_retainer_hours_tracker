@@ -53,10 +53,19 @@ RUN /app/.venv/bin/python manage.py collectstatic --noinput
 # ─────────────────────────────────────────────────────────────────| Runtime |──
 FROM python:3.14-slim AS runtime
 
+# WeasyPrint (PDF report generation) needs these system libraries, not
+# part of the base image - only required here (not python-builder):
+# tracker/pdf.py imports weasyprint lazily inside the render call, so
+# nothing at build time (collectstatic, etc.) ever touches it.
+#
 # Fixed UID/GID (not auto-assigned) so docker-compose.yml's init-permissions
 # service - a minimal image, not this one, so it doesn't have `app` defined
 # by name - can `chown 1000:1000` bind-mounted config to match.
-RUN groupadd --system --gid 1000 app \
+RUN apt-get update -qq \
+    && apt-get install -y --no-install-recommends -qq \
+       libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libfontconfig1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 1000 app \
     && useradd --system --uid 1000 --gid app --home /app app
 
 WORKDIR /app

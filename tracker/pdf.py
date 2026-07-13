@@ -9,7 +9,6 @@ swapped in later without touching anything that renders a report.
 from typing import Protocol
 
 from django.http import HttpResponse
-from weasyprint import HTML
 
 
 class PDFRenderer(Protocol):
@@ -29,7 +28,14 @@ class PDFRenderer(Protocol):
 
 
 class WeasyPrintRenderer:
-    """Default PDF renderer, backed by WeasyPrint."""
+    """Default PDF renderer, backed by WeasyPrint.
+
+    WeasyPrint's own import pulls in system libraries (Pango,
+    HarfBuzz, Fontconfig, GObject) that aren't part of a base Python
+    install - imported lazily here, inside `render()`, so a host
+    missing them still runs migrations/tests/every other page fine,
+    and only report generation itself fails.
+    """
 
     def render(self, html: str) -> bytes:
         """Renders an HTML string to PDF bytes via WeasyPrint.
@@ -40,6 +46,8 @@ class WeasyPrintRenderer:
         Returns:
             bytes: The generated PDF's raw bytes.
         """
+
+        from weasyprint import HTML
 
         return HTML(string=html).write_pdf()
 
