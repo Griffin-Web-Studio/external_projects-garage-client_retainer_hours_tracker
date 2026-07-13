@@ -392,9 +392,29 @@ class BillOverageForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Optional"}),
     )
 
+    def __init__(self, *args, max_unbilled, **kwargs):
+        """Stores the max billable minutes per type for `clean()`.
+
+        Args:
+            *args: Positional arguments forwarded to `forms.Form.__init__`.
+            max_unbilled (dict[str, int]): Maximum billable minutes per
+                type (`{"SUPPORT": ..., "DEVELOPMENT": ...}`) - required,
+                not optional, so a caller can't accidentally validate
+                this form without an overage cap in place.
+            **kwargs: Keyword arguments forwarded to `forms.Form.__init__`.
+        """
+
+        super().__init__(*args, **kwargs)
+        self.max_unbilled = max_unbilled
+
     def clean(self):
-        """Validates that the combined hours/minutes meets the
-        configured minimum overage billing duration.
+        """Validates the minimum duration and that the billed amount
+        doesn't exceed the outstanding overage for the selected type.
+
+        A partial billing (less than what's owed) is fine - overage can
+        be billed in installments. Billing more than what's owed isn't:
+        any "extra" should go through Purchase Extra Hours instead, so
+        it's tracked as a buffer rather than untracked overpayment.
 
         Returns:
             dict: The form's cleaned data.
@@ -407,6 +427,30 @@ class BillOverageForm(forms.Form):
             "minutes_charged",
             get_min_overage_billing_minutes(),
         )
+
+        entry_type = cleaned_data.get("type")
+        hours_charged = cleaned_data.get("hours_charged")
+        minutes_charged = cleaned_data.get("minutes_charged")
+
+        if (
+            entry_type is not None
+            and hours_charged is not None
+            and minutes_charged is not None
+        ):
+            entered_minutes = hm_to_minutes(hours_charged, minutes_charged)
+            max_allowed = self.max_unbilled.get(entry_type, 0)
+
+            if entered_minutes > max_allowed:
+                raise forms.ValidationError(
+                    {
+                        "hours_charged": (
+                            "Cannot bill more than the outstanding "
+                            f"overage ({fmt_hm(max_allowed)}). Use "
+                            "Purchase Extra Hours to charge for more."
+                        )
+                    }
+                )
+
         return cleaned_data
 
 

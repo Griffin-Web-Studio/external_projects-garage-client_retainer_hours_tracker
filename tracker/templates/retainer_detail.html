@@ -97,9 +97,9 @@
             <p class="font-mono text-2xl font-semibold text-white">
               {{ summary.remaining_support|clamp|fmt_hm }}
             </p>
-            {% if summary.support_overage > 0 %}
+            {% if unbilled_s > 0 %}
               <p class="text-xs text-red-400 mt-1">
-                {{ summary.support_overage|fmt_hm }} overage
+                {{ unbilled_s|fmt_hm }} overage
               </p>
             {% endif %}
           </div>
@@ -146,9 +146,9 @@
               <p class="font-mono text-2xl font-semibold text-white">
                 {{ summary.remaining_dev|clamp|fmt_hm }}
               </p>
-              {% if summary.dev_overage > 0 %}
+              {% if unbilled_d > 0 %}
                 <p class="text-xs text-red-400 mt-1">
-                  {{ summary.dev_overage|fmt_hm }} overage
+                  {{ unbilled_d|fmt_hm }} overage
                 </p>
               {% else %}
                 <p class="text-xs text-slate-500 mt-1">
@@ -161,9 +161,9 @@
                         p-4 flex items-center justify-center"
             >
               <span class="px-2 py-0.5 rounded-full text-xs font-medium
-                          {{ summary.hours_status|status_badge_classes }}"
+                          {{ display_status|status_badge_classes }}"
               >
-                {{ summary.hours_status|status_label }}
+                {{ display_status|status_label }}
               </span>
             </div>
           {% endif %}
@@ -181,7 +181,7 @@
           </div>
           <div class="h-1.5 rounded-full overflow-hidden bg-white/10">
             <div class="h-full rounded-full transition-all
-                        {{ summary.hours_status|hours_bar_color }}"
+                        {{ display_status|hours_bar_color }}"
                  style="width: {{ summary.support_used_pct|floatformat_pct }}%"
             ></div>
           </div>
@@ -203,11 +203,11 @@
               </p>
             </div>
 
-            {% if summary.support_overage > 0 %}
+            {% if unbilled_s > 0 %}
               <div>
                 <p class="text-slate-400 text-xs">Support overage</p>
                 <p class="text-red-400 font-mono">
-                  {{ summary.support_overage|fmt_hm }}
+                  {{ unbilled_s|fmt_hm }}
                 </p>
               </div>
             {% endif %}

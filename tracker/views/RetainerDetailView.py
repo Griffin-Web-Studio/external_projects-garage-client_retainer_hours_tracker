@@ -9,6 +9,7 @@ from tracker.hours import (
     calculate_term_hours,
     compute_converted_dev_minutes,
     compute_migrated_support_minutes,
+    display_hours_status,
     fmt_hm,
     get_hours_config,
     minutes_to_hm,
@@ -117,6 +118,12 @@ class RetainerDetailView(LoginRequiredMixin, View):
         unbilled_s = unbilled_overage(s_overage, billings, "SUPPORT")
         unbilled_d = unbilled_overage(d_overage, billings, "DEVELOPMENT")
 
+        display_status = (
+            display_hours_status(summary, unbilled_s, unbilled_d, cfg)
+            if is_active_term
+            else None
+        )
+
         if bill_form is None:
             unbilled_hours, unbilled_minutes = minutes_to_hm(
                 unbilled_s if unbilled_s > 0 else unbilled_d
@@ -126,7 +133,8 @@ class RetainerDetailView(LoginRequiredMixin, View):
                     "type": "SUPPORT" if unbilled_s > 0 else "DEVELOPMENT",
                     "hours_charged": unbilled_hours,
                     "minutes_charged": unbilled_minutes,
-                }
+                },
+                max_unbilled={"SUPPORT": unbilled_s, "DEVELOPMENT": unbilled_d},
             )
 
         if purchase_form is None:
@@ -167,6 +175,7 @@ class RetainerDetailView(LoginRequiredMixin, View):
                 "is_active_term": is_active_term,
                 "unbilled_s": unbilled_s,
                 "unbilled_d": unbilled_d,
+                "display_status": display_status,
                 "billed_s": billed_s,
                 "billed_d": billed_d,
                 "has_overage": unbilled_s > 0 or unbilled_d > 0,

@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 
 from tracker.forms import BillOverageForm
+from tracker.hours import get_hours_config, term_unbilled_overage
 from tracker.models import Client, OverageBilling, Retainer
 from tracker.views.RetainerDetailView import RetainerDetailView
 
@@ -39,7 +40,8 @@ class BillOverageView(LoginRequiredMixin, View):
         if not term:
             return redirect("retainer-detail", pk=pk, retainer_pk=retainer_pk)
 
-        form = BillOverageForm(request.POST)
+        max_unbilled = term_unbilled_overage(term, get_hours_config())
+        form = BillOverageForm(request.POST, max_unbilled=max_unbilled)
 
         if form.is_valid():
             OverageBilling.objects.create(

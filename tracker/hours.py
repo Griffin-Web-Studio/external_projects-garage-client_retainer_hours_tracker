@@ -596,3 +596,81 @@ def unbilled_overage(computed_overage: int, billings, entry_type: str) -> int:
     """
 
     return max(0, computed_overage - billed_overage(billings, entry_type))
+
+
+def term_unbilled_overage(
+    term: ClientTerm, config: HoursConfig | None = None
+) -> dict:
+    """Computes unbilled overage minutes for both entry types on a term.
+
+    Self-contained convenience wrapper for callers that don't already
+    have the term's entries/purchases/billings pre-fetched - unlike
+    `calculate_term_hours`, which expects them passed in.
+
+    Args:
+        term (ClientTerm): Term to compute unbilled overage for.
+        config (HoursConfig | None, optional): Hours config. Defaults
+            to None, in which case `get_hours_config()` is used.
+
+    Returns:
+        dict[str, int]: `{"SUPPORT": ..., "DEVELOPMENT": ...}` unbilled
+            overage minutes, each floored at 0.
+    """
+
+    if config is None:
+        config = get_hours_config()
+
+    entries = list(term.time_entries.all())
+    purchases = list(term.hours_purchases.all())
+    billings = list(term.overage_billings.all())
+    summary = calculate_term_hours(term, entries, purchases, config)
+
+    support_overage = getattr(summary, "support_overage", 0)
+    dev_overage = getattr(summary, "dev_overage", 0)
+
+    return {
+        "SUPPORT": unbilled_overage(support_overage, billings, "SUPPORT"),
+        "DEVELOPMENT": unbilled_overage(dev_overage, billings, "DEVELOPMENT"),
+    }
+
+
+def display_hours_status(
+    summary: ActiveTermSummary,
+    unbilled_support: int,
+    unbilled_dev: int,
+    config: HoursConfig | None = None,
+) -> HoursStatus:
+    """Computes the term's health status for display, netted against
+    what's actually still owed.
+
+    `summary.hours_status` is "overage" whenever raw usage exceeds the
+    allocation and purchased buffer, even if that excess has already
+    been paid off (e.g. leftover credit from historical over-billing
+    that predates `BillOverageForm` capping `hours_charged` at the
+    outstanding amount). Badges and stat cards should reflect what's
+    actually unbilled, not the raw figure, so a term never reads as
+    "in overage" when nothing is owed.
+
+    Args:
+        summary (ActiveTermSummary): The term's computed hours summary.
+        unbilled_support (int): Unbilled SUPPORT overage minutes.
+        unbilled_dev (int): Unbilled DEVELOPMENT overage minutes.
+        config (HoursConfig | None, optional): Hours config. Defaults
+            to None, in which case `get_hours_config()` is used.
+
+    Returns:
+        HoursStatus: "overage" if there's a net unbilled amount,
+            otherwise the same "low"/"healthy" classification
+            `calculate_term_hours` would produce without any overage.
+    """
+
+    if config is None:
+        config = get_hours_config()
+
+    if unbilled_support > 0 or unbilled_dev > 0:
+        return "overage"
+
+    if summary.support_used_pct > config.low_hours_threshold:
+        return "low"
+
+    return "healthy"
