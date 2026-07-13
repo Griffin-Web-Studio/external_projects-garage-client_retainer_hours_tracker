@@ -108,6 +108,7 @@ class RetainerDetailView(LoginRequiredMixin, View):
         )
         billings = list(term.overage_billings.order_by("-billed_at"))
         purchases = list(term.hours_purchases.all())
+        reports = list(term.reports.order_by("-generated_at"))
         summary = calculate_term_hours(term, entries, purchases, cfg)
 
         is_active_term = summary.status == "active"
@@ -175,6 +176,7 @@ class RetainerDetailView(LoginRequiredMixin, View):
                 "entries": entries,
                 "billings": billings,
                 "purchases": purchases,
+                "reports": reports,
                 "summary": summary,
                 "is_active_term": is_active_term,
                 "unbilled_s": unbilled_s,

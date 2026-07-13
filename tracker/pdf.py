@@ -8,6 +8,7 @@ swapped in later without touching anything that renders a report.
 
 from typing import Protocol
 
+from django.http import HttpResponse
 from weasyprint import HTML
 
 
@@ -52,3 +53,24 @@ def get_pdf_renderer() -> PDFRenderer:
     """
 
     return WeasyPrintRenderer()
+
+
+def pdf_http_response(
+    pdf_bytes: bytes, filename: str, disposition: str = "attachment"
+) -> HttpResponse:
+    """Builds an HTTP response streaming raw PDF bytes to the browser.
+
+    Args:
+        pdf_bytes (bytes): The PDF's raw bytes.
+        filename (str): Filename suggested to the browser.
+        disposition (str, optional): "attachment" (forces a download)
+            or "inline" (opens in-browser). Defaults to "attachment".
+
+    Returns:
+        HttpResponse: `pdf_bytes` with the right Content-Type/
+            Content-Disposition headers set.
+    """
+
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'{disposition}; filename="{filename}"'
+    return response

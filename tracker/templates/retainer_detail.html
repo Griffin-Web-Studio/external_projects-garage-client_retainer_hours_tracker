@@ -575,6 +575,79 @@
         </section>
       {% endif %}
 
+      {# Overage report #}
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-medium text-slate-400 uppercase
+                     tracking-wider"
+          >
+            Overage Report
+          </h2>
+          <div class="flex items-center gap-3">
+            <a href="{% if is_latest_term %}{% url 'report' client.pk retainer.pk %}{% else %}{% url 'report-term' client.pk retainer.pk term.term_number %}{% endif %}"
+               target="_blank"
+               class="text-xs text-secondary hover:text-secondary-alt
+                      transition-colors"
+            >
+              Preview PDF
+            </a>
+            <form method="post"
+                  action="{% if is_latest_term %}{% url 'report' client.pk retainer.pk %}{% else %}{% url 'report-term' client.pk retainer.pk term.term_number %}{% endif %}"
+            >
+              {% csrf_token %}
+              <button type="submit"
+                      class="text-xs text-secondary hover:text-secondary-alt
+                             transition-colors"
+              >
+                Generate Formal Report
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {% if reports %}
+          <div class="bg-white/5 border border-secondary/20 rounded-2xl
+                      overflow-hidden"
+          >
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-white/10 text-xs text-slate-400
+                           uppercase tracking-wider"
+                >
+                  <th class="px-4 py-3 text-left font-medium">Generated</th>
+                  <th class="px-4 py-3 text-left font-medium">Template</th>
+                  <th class="px-4 py-3 text-left font-medium">By</th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                {% for r in reports %}
+                  <tr>
+                    <td class="px-4 py-3 text-slate-400">
+                      {{ r.generated_at|date:"j M Y H:i" }}
+                    </td>
+                    <td class="px-4 py-3 text-slate-400">
+                      {{ r.template.name }}
+                    </td>
+                    <td class="px-4 py-3 text-slate-400">
+                      {{ r.generated_by|default:"-" }}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <a href="{% url 'report-download' client.pk retainer.pk r.pk %}"
+                         class="text-xs text-secondary hover:text-secondary-alt
+                                transition-colors"
+                      >
+                        Download
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </section>
+
       {# Time entries #}
       <section class="space-y-3">
         <div class="flex items-center justify-between">

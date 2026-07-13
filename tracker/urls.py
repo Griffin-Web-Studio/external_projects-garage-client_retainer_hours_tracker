@@ -89,6 +89,23 @@ urlpatterns = [
         name="bill-overage-term",
     ),
     path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/report/",
+        login_required(views.ReportView.as_view()),
+        name="report",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/terms/"
+        "<int:term_number>/report/",
+        login_required(views.ReportView.as_view()),
+        name="report-term",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/reports/"
+        "<int:report_pk>/download/",
+        login_required(views.DownloadReportView.as_view()),
+        name="report-download",
+    ),
+    path(
         "time-entries/<int:pk>/delete/",
         login_required(views.DeleteTimeEntryView.as_view()),
         name="delete-time-entry",

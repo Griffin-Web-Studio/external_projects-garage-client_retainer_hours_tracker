@@ -16,3 +16,5 @@ from .DeleteTimeEntryView import DeleteTimeEntryView
 from .NewTermView import NewTermView
 from .PurchaseHoursView import PurchaseHoursView
 from .BillOverageView import BillOverageView
+from .ReportView import ReportView
+from .DownloadReportView import DownloadReportView
