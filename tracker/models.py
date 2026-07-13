@@ -130,6 +130,14 @@ class Client(models.Model):
     name = models.CharField(max_length=200)
     notes = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+
+    # Billing address - the "bill to" party on generated overage reports.
+    address_line1 = models.CharField(max_length=200, blank=True)
+    address_line2 = models.CharField(max_length=200, blank=True)
+    postal_code = models.CharField(max_length=20, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

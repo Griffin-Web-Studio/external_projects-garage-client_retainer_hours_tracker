@@ -173,12 +173,18 @@ class EditRetainerForm(forms.Form):
 
 
 class EditClientForm(forms.Form):
-    """Form for editing an existing client's name, notes, and status.
+    """Form for editing an existing client's name, notes, status, and
+    billing address.
 
     Attributes:
         name (CharField): Client's display name.
         notes (CharField): Optional internal notes about the client.
         is_active (ChoiceField): Whether the client is active or inactive.
+        address_line1 (CharField): Optional billing address line 1.
+        address_line2 (CharField): Optional billing address line 2.
+        postal_code (CharField): Optional billing postal/zip code.
+        city (CharField): Optional billing city.
+        country (CharField): Optional billing country.
     """
 
     name = forms.CharField(max_length=200)
@@ -189,6 +195,11 @@ class EditClientForm(forms.Form):
     is_active = forms.ChoiceField(
         choices=[("true", "Active"), ("false", "Inactive")],
     )
+    address_line1 = forms.CharField(max_length=200, required=False)
+    address_line2 = forms.CharField(max_length=200, required=False)
+    postal_code = forms.CharField(max_length=20, required=False)
+    city = forms.CharField(max_length=100, required=False)
+    country = forms.CharField(max_length=100, required=False)
 
 
 class LogTimeForm(forms.Form):

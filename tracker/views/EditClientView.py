@@ -7,7 +7,9 @@ from tracker.models import Client
 
 
 class EditClientView(LoginRequiredMixin, View):
-    """View for editing an existing client's name, notes, and status."""
+    """View for editing an existing client's name, notes, status, and
+    billing address.
+    """
 
     def get(self, request, pk):
         """Renders the client form pre-filled with the client's values.
@@ -27,6 +29,11 @@ class EditClientView(LoginRequiredMixin, View):
                 "name": client.name,
                 "notes": client.notes,
                 "is_active": "true" if client.is_active else "false",
+                "address_line1": client.address_line1,
+                "address_line2": client.address_line2,
+                "postal_code": client.postal_code,
+                "city": client.city,
+                "country": client.country,
             }
         )
 
@@ -51,6 +58,11 @@ class EditClientView(LoginRequiredMixin, View):
             client.name = form.cleaned_data["name"]
             client.notes = form.cleaned_data.get("notes") or ""
             client.is_active = form.cleaned_data["is_active"] == "true"
+            client.address_line1 = form.cleaned_data.get("address_line1") or ""
+            client.address_line2 = form.cleaned_data.get("address_line2") or ""
+            client.postal_code = form.cleaned_data.get("postal_code") or ""
+            client.city = form.cleaned_data.get("city") or ""
+            client.country = form.cleaned_data.get("country") or ""
             client.save()
 
             return redirect("client-detail", pk=client.pk)
