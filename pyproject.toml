@@ -11,6 +11,7 @@ dependencies = [
   "mozilla-django-oidc>=4.0",
   "gunicorn>=23.0.0",
   "jinja2>=3.1",
+  "weasyprint>=69.0",
 ]
 
 [project.optional-dependencies]
