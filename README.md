@@ -1,4 +1,8 @@
-<img align="right" width="200" src="static/images/light-icon.svg" alt="Project Icon">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="static/images/dark-icon.svg">
+  <source media="(prefers-color-scheme: light)" srcset="static/images/light-icon.svg">
+  <img align="right" width="200" alt="RetainerTracker project icon" src="static/images/light-icon.svg">
+</picture>
 
 > [!NOTE]
 > GitHub users - this project is maintained over [on GitLab](https://gitlab.com/griffin-web-studio/garage/client-retainer-hours-tracker).
