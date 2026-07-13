@@ -38,6 +38,8 @@ class AppConfig:
     dev_conversion_ratio: float
     max_migrate_hours: float
     low_hours_threshold: float
+    min_log_entry_minutes: int
+    min_overage_billing_minutes: int
 
     # ────────────────────────────────────────────────────────────────| OIDC |──
     oidc_enabled: bool
@@ -107,6 +109,12 @@ class AppConfig:
             ),
             low_hours_threshold=config.getfloat(
                 "hours", "low_hours_threshold", fallback=75.0
+            ),
+            min_log_entry_minutes=config.getint(
+                "hours", "min_log_entry_minutes", fallback=5
+            ),
+            min_overage_billing_minutes=config.getint(
+                "hours", "min_overage_billing_minutes", fallback=1
             ),
             # ── OIDC ──────────────────────────────────────────────────────────
             oidc_enabled=bool(oidc_issuer),

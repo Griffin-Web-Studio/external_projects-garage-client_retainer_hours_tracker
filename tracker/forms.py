@@ -4,7 +4,12 @@ from datetime import date
 
 from django import forms
 
-from tracker.hours import get_max_migrate_hours, hm_to_minutes
+from tracker.hours import (
+    get_max_migrate_hours,
+    get_min_log_entry_minutes,
+    get_min_overage_billing_minutes,
+    hm_to_minutes,
+)
 
 
 def _validate_min_duration(
@@ -34,8 +39,9 @@ def _validate_min_duration(
         return
 
     if hm_to_minutes(hours, minutes) < min_minutes:
+        unit = "minute" if min_minutes == 1 else "minutes"
         raise forms.ValidationError(
-            {hours_field: (f"Must be at least {min_minutes} minutes in total.")}
+            {hours_field: f"Must be at least {min_minutes} {unit} in total."}
         )
 
 
@@ -254,14 +260,17 @@ class LogTimeForm(forms.Form):
         return entry_date
 
     def clean(self):
-        """Validates that the combined hours/minutes is at least 15 min.
+        """Validates that the combined hours/minutes meets the
+        configured minimum log entry duration.
 
         Returns:
             dict: The form's cleaned data.
         """
 
         cleaned_data = super().clean()
-        _validate_min_duration(cleaned_data, "hours", "minutes", 15)
+        _validate_min_duration(
+            cleaned_data, "hours", "minutes", get_min_log_entry_minutes()
+        )
         return cleaned_data
 
 
@@ -356,7 +365,8 @@ class BillOverageForm(forms.Form):
     )
 
     def clean(self):
-        """Validates that the combined hours/minutes is at least 15 min.
+        """Validates that the combined hours/minutes meets the
+        configured minimum overage billing duration.
 
         Returns:
             dict: The form's cleaned data.
@@ -364,6 +374,9 @@ class BillOverageForm(forms.Form):
 
         cleaned_data = super().clean()
         _validate_min_duration(
-            cleaned_data, "hours_charged", "minutes_charged", 15
+            cleaned_data,
+            "hours_charged",
+            "minutes_charged",
+            get_min_overage_billing_minutes(),
         )
         return cleaned_data

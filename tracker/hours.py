@@ -33,6 +33,10 @@ class HoursConfig:
             to a new term without conversion.
         low_hours_threshold (float): Percentage of allocated hours used
             at which the "low" warning triggers.
+        min_log_entry_minutes (int): Minimum total minutes a single
+            time entry can be logged for.
+        min_overage_billing_minutes (int): Minimum total minutes a
+            single overage billing can be recorded for.
     """
 
     term_months: int = 12
@@ -41,6 +45,8 @@ class HoursConfig:
     )
     max_migrate_hours: float = 6.0  # cap on hours migrated without conversion
     low_hours_threshold: float = 75.0  # % used before "low" warning triggers
+    min_log_entry_minutes: int = 5
+    min_overage_billing_minutes: int = 1
 
 
 def get_hours_config() -> HoursConfig:
@@ -63,6 +69,8 @@ def get_hours_config() -> HoursConfig:
             dev_conversion_ratio=cfg.dev_conversion_ratio,
             max_migrate_hours=cfg.max_migrate_hours,
             low_hours_threshold=cfg.low_hours_threshold,
+            min_log_entry_minutes=cfg.min_log_entry_minutes,
+            min_overage_billing_minutes=cfg.min_overage_billing_minutes,
         )
 
     except Exception:
@@ -99,6 +107,28 @@ def get_dev_conversion_ratio() -> float:
     """
 
     return get_hours_config().dev_conversion_ratio
+
+
+def get_min_log_entry_minutes() -> int:
+    """Gets the configured minimum duration for a single time entry.
+
+    Returns:
+        int: Minimum total minutes a single time entry can be logged
+            for.
+    """
+
+    return get_hours_config().min_log_entry_minutes
+
+
+def get_min_overage_billing_minutes() -> int:
+    """Gets the configured minimum duration for a single overage billing.
+
+    Returns:
+        int: Minimum total minutes a single overage billing can be
+            recorded for.
+    """
+
+    return get_hours_config().min_overage_billing_minutes
 
 
 # ─────────────────────────────────────────────────────────────────| Helpers |──
