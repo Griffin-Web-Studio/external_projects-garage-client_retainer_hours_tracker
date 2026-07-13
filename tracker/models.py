@@ -471,3 +471,61 @@ class CompanyProfile(models.Model):
 
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+# ─────────────────────────────────────────────────────────| ReportTemplate |──
+class ReportTemplate(models.Model):
+    """ReportTemplate model - a reusable Jinja2 template rendered to HTML
+    (then to PDF) to produce an overage report.
+
+    Rendered inside a Jinja2 `SandboxedEnvironment` (see
+    `tracker.reports.render_report_template`) rather than Django's own
+    template language, so template content edited via the admin is
+    never trusted with arbitrary Python execution.
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        ReportTemplate: ReportTemplate model
+    """
+
+    name = models.CharField(max_length=200)
+    content = models.TextField(
+        help_text=(
+            "Jinja2 template source, rendered to HTML before PDF " "conversion."
+        )
+    )
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        """Validates that `content` is syntactically valid Jinja2.
+
+        Raises:
+            ValidationError: If `content` fails to parse.
+        """
+
+        from django.core.exceptions import ValidationError
+        from jinja2 import TemplateSyntaxError
+
+        from tracker.reports import get_sandboxed_environment
+
+        try:
+            get_sandboxed_environment().parse(self.content)
+
+        except TemplateSyntaxError as e:
+            raise ValidationError({"content": f"Invalid Jinja2 template: {e}"})
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            ReportTemplate.objects.exclude(pk=self.pk).update(is_default=False)
+
+        super().save(*args, **kwargs)

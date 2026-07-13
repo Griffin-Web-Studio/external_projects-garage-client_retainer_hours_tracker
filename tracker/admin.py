@@ -7,6 +7,7 @@ from .models import (
     Employee,
     HoursPurchase,
     OverageBilling,
+    ReportTemplate,
     Retainer,
     TimeEntry,
 )
@@ -150,3 +151,10 @@ class CompanyProfileAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(ReportTemplate)
+class ReportTemplateAdmin(admin.ModelAdmin):
+    list_display = ("name", "is_default", "updated_at")
+    list_filter = ("is_default",)
+    search_fields = ("name",)
