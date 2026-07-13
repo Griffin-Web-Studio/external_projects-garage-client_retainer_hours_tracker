@@ -380,3 +380,40 @@ class BillOverageForm(forms.Form):
             get_min_overage_billing_minutes(),
         )
         return cleaned_data
+
+
+class HoursPurchaseForm(forms.Form):
+    """Form for recording a purchase of extra buffer support hours.
+
+    Attributes:
+        hours (IntegerField): Whole hours purchased.
+        minutes (IntegerField): Additional minutes purchased (0-59).
+        invoice_ref (CharField): Optional invoice reference.
+        notes (CharField): Optional notes about the purchase.
+    """
+
+    hours = forms.IntegerField(min_value=0)
+    minutes = forms.IntegerField(min_value=0, max_value=59, initial=0)
+    invoice_ref = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "INV-001 (optional)"}),
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Optional"}),
+    )
+
+    def clean(self):
+        """Validates that the combined hours/minutes meets the
+        configured minimum overage billing duration.
+
+        Returns:
+            dict: The form's cleaned data.
+        """
+
+        cleaned_data = super().clean()
+        _validate_min_duration(
+            cleaned_data, "hours", "minutes", get_min_overage_billing_minutes()
+        )
+        return cleaned_data

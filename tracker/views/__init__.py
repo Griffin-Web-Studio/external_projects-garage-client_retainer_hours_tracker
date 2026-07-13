@@ -14,4 +14,5 @@ from .RetainerDetailView import RetainerDetailView
 from .LogTimeView import LogTimeView
 from .DeleteTimeEntryView import DeleteTimeEntryView
 from .NewTermView import NewTermView
+from .PurchaseHoursView import PurchaseHoursView
 from .BillOverageView import BillOverageView

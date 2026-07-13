@@ -73,6 +73,11 @@ urlpatterns = [
         name="new-term",
     ),
     path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/purchase-hours/",
+        login_required(views.PurchaseHoursView.as_view()),
+        name="purchase-hours",
+    ),
+    path(
         "clients/<int:pk>/retainers/<int:retainer_pk>/bill-overage/",
         login_required(views.BillOverageView.as_view()),
         name="bill-overage",

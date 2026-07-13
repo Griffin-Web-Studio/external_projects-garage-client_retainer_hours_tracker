@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, render
 from django.views import View
 
-from tracker.forms import BillOverageForm
+from tracker.forms import BillOverageForm, HoursPurchaseForm
 from tracker.hours import (
     ExpiredTermSummary,
     billed_overage,
@@ -44,7 +44,13 @@ class RetainerDetailView(LoginRequiredMixin, View):
         return self._render(request, pk, retainer_pk, term_number=term_number)
 
     def _render(
-        self, request, pk, retainer_pk, bill_form=None, term_number=None
+        self,
+        request,
+        pk,
+        retainer_pk,
+        bill_form=None,
+        purchase_form=None,
+        term_number=None,
     ):
         """Builds the full context and renders retainer_detail.html.
 
@@ -56,6 +62,10 @@ class RetainerDetailView(LoginRequiredMixin, View):
                 re-render with validation errors after a failed overage
                 billing submission. Defaults to None, in which case a
                 fresh unbound form is built.
+            purchase_form (HoursPurchaseForm | None, optional): Bound
+                form to re-render with validation errors after a failed
+                hours purchase submission. Defaults to None, in which
+                case a fresh unbound form is built.
             term_number (int | None, optional): Specific term to
                 display. Defaults to None, in which case the retainer's
                 current (latest) term is shown.
@@ -119,6 +129,9 @@ class RetainerDetailView(LoginRequiredMixin, View):
                 }
             )
 
+        if purchase_form is None:
+            purchase_form = HoursPurchaseForm()
+
         conv_dev_hours = 0
         mig_sup_hours = 0
 
@@ -149,6 +162,7 @@ class RetainerDetailView(LoginRequiredMixin, View):
                 "historical_entries": historical_entries,
                 "entries": entries,
                 "billings": billings,
+                "purchases": purchases,
                 "summary": summary,
                 "is_active_term": is_active_term,
                 "unbilled_s": unbilled_s,
@@ -157,6 +171,7 @@ class RetainerDetailView(LoginRequiredMixin, View):
                 "billed_d": billed_d,
                 "has_overage": unbilled_s > 0 or unbilled_d > 0,
                 "bill_form": bill_form,
+                "purchase_form": purchase_form,
                 "conv_dev_hours": conv_dev_hours,
                 "mig_sup_hours": mig_sup_hours,
                 "max_migrate": cfg.max_migrate_hours,
