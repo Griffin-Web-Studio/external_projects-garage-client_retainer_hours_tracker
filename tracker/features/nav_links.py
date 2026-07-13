@@ -75,4 +75,11 @@ NAV_LINKS: list[NavLinkConfig] = [
         "mode": DashboardMode.NORMAL,
         # No permission - every authenticated user can view retainers.
     },
+    {
+        "name": "admin:tracker_companyprofile_changelist",
+        "label": "Company Profile",
+        "icon": "icon_si_buildings",
+        "mode": DashboardMode.NORMAL,
+        "permission": "ADMIN",
+    },
 ]
