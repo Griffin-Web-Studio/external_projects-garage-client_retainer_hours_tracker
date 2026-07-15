@@ -6,6 +6,7 @@ from factory.django import DjangoModelFactory
 from faker import Faker
 
 from database.factories.employee_factory import EmployeeFactory
+from tracker.hours import add_months, get_term_months
 from tracker.models import Client, ClientTerm, Retainer, TimeEntry
 
 _faker = Faker()
@@ -65,7 +66,8 @@ class ClientTermFactory(DjangoModelFactory):
         lambda: date.today().replace(day=1) - timedelta(days=180)
     )
     end_date = factory.LazyAttribute(
-        lambda o: o.start_date.replace(year=o.start_date.year + 1)
+        lambda o: add_months(o.start_date, get_term_months())
+        - timedelta(days=1)
     )
     monthly_hours = factory.LazyFunction(
         lambda: random.choice([5, 8, 10, 15, 20])

@@ -214,7 +214,7 @@ class NewTermView(LoginRequiredMixin, View):
             )
 
         new_start = term.end_date + timedelta(days=1)
-        new_end = add_months(new_start, cfg.term_months)
+        new_end = add_months(new_start, cfg.term_months) - timedelta(days=1)
 
         new_term = ClientTerm.objects.create(
             retainer=retainer,

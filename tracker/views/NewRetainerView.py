@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
@@ -43,7 +45,7 @@ class NewRetainerView(LoginRequiredMixin, View):
 
         if form.is_valid():
             start = form.cleaned_data["start_date"]
-            end = add_months(start, get_term_months())
+            end = add_months(start, get_term_months()) - timedelta(days=1)
             retainer = Retainer.objects.create(
                 client=client, name=form.cleaned_data["name"]
             )

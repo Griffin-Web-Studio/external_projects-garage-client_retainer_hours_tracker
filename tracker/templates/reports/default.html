@@ -1,6 +1,4 @@
-from django.db import migrations
-
-DEFAULT_TEMPLATE_CONTENT = """<html>
+<html>
 
 <head>
   <style>
@@ -308,45 +306,3 @@ DEFAULT_TEMPLATE_CONTENT = """<html>
 </body>
 
 </html>
-"""
-
-
-def seed_default_report_template(apps, schema_editor):
-    """Creates a default ReportTemplate if none exists yet.
-
-    Without this, generating a report requires hand-writing a Jinja2
-    template from scratch in the admin before the feature works at
-    all. This gives every install a usable, reasonably complete
-    default (company/client details, hours summary, entries,
-    purchases, billings) out of the box - a no-op if a template
-    already exists, so it won't clobber anything a user has already
-    set up.
-
-    Args:
-        apps: Historical app registry.
-        schema_editor: Unused, required by the RunPython signature.
-    """
-
-    ReportTemplate = apps.get_model("tracker", "ReportTemplate")
-
-    if ReportTemplate.objects.exists():
-        return
-
-    ReportTemplate.objects.create(
-        name="Default Overage Report",
-        content=DEFAULT_TEMPLATE_CONTENT,
-        is_default=True,
-    )
-
-
-class Migration(migrations.Migration):
-
-    dependencies = [
-        ("tracker", "0016_overagereport"),
-    ]
-
-    operations = [
-        migrations.RunPython(
-            seed_default_report_template, migrations.RunPython.noop
-        ),
-    ]

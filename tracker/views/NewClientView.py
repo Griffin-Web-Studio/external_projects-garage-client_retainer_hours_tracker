@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
 from django.views import View
@@ -40,7 +42,7 @@ class NewClientView(LoginRequiredMixin, View):
 
         if form.is_valid():
             start = form.cleaned_data["start_date"]
-            end = add_months(start, get_term_months())
+            end = add_months(start, get_term_months()) - timedelta(days=1)
             client = Client.objects.create(
                 name=form.cleaned_data["name"],
                 notes=form.cleaned_data.get("notes") or "",

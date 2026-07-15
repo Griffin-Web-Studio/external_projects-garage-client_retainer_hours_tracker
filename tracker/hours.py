@@ -366,7 +366,7 @@ def calculate_term_hours(
         config = get_hours_config()
 
     today = date.today()
-    is_active = today < term.end_date
+    is_active = today <= term.end_date
 
     support_entries = [e for e in time_entries if e.type == "SUPPORT"]
     dev_entries = [e for e in time_entries if e.type == "DEVELOPMENT"]
