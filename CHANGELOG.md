@@ -1,3 +1,10 @@
+## v0.1.0-alpha.11 (2026-07-15)
+
+### Bug Fixes
+
+- **terms**: retroactively correct existing ClientTerm boundary drift
+- **terms**: correct end_date off-by-one causing renewal drift
+
 ## v0.1.0-alpha.10 (2026-07-13)
 
 ### Features
