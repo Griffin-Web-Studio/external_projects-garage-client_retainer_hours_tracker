@@ -3,19 +3,22 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently 'pnpm ts:watch' 'pnpm css:watch'",
-    "build": "concurrently 'pnpm ts:build' 'pnpm css:build'",
+    "dev": "concurrently -n TypeScript,Tailwind -c blue,green 'pnpm ts:watch' 'pnpm css:watch'",
+    "build": "concurrently -n TypeScript,Tailwind -c blue,green 'pnpm ts:build' 'pnpm css:build'",
     "css:build": "tailwindcss -i ./static/src/global.css -o ./static/build/css/final.css",
     "css:watch": "pnpm css:build --watch",
-    "ts:build": "echo ts not yet implemented",
-    "ts:watch": "echo ts not yet implemented"
+    "ts:build": "node esbuild.config.mjs",
+    "ts:watch": "node esbuild.config.mjs --watch",
+    "ts:typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.3.0",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "typescript": "^7.0.2"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "esbuild": "^0.28.0"
   },
   "packageManager": "pnpm@9.15.0"
 }
