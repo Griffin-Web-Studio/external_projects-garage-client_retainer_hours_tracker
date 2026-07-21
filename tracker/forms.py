@@ -465,6 +465,77 @@ class BillOverageForm(forms.Form):
         return cleaned_data
 
 
+class NewWorkOrderForm(forms.Form):
+    """Form for creating a new work order and its checklist items.
+
+    Attributes:
+        title (CharField): Work order's display title.
+        description (CharField): Optional context for the work order.
+        items_text (CharField): One checklist item per line - split
+            into a list of item descriptions in `clean_items_text`.
+    """
+
+    title = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={"placeholder": "e.g. Website refresh"}),
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "rows": 3,
+                "placeholder": "Optional context for this work order...",
+            }
+        ),
+    )
+    items_text = forms.CharField(
+        label="Checklist items",
+        help_text="One checklist item per line.",
+        widget=forms.Textarea(
+            attrs={
+                "rows": 6,
+                "placeholder": (
+                    "Fix login redirect bug\nUpdate DNS records\n"
+                    "Review contact form spam filter"
+                ),
+            }
+        ),
+    )
+
+    def clean_items_text(self):
+        """Splits the checklist textarea into a list of item descriptions.
+
+        Returns:
+            list[str]: Non-blank, stripped lines from `items_text`.
+
+        Raises:
+            forms.ValidationError: If no non-blank lines remain.
+        """
+
+        raw = self.cleaned_data["items_text"]
+        items = [line.strip() for line in raw.splitlines() if line.strip()]
+
+        if not items:
+            raise forms.ValidationError("Add at least one checklist item.")
+
+        return items
+
+
+class EditWorkOrderForm(forms.Form):
+    """Form for editing an existing work order's title and description.
+
+    Attributes:
+        title (CharField): Work order's display title.
+        description (CharField): Optional context for the work order.
+    """
+
+    title = forms.CharField(max_length=200)
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3}),
+    )
+
+
 class HoursPurchaseForm(forms.Form):
     """Form for recording a purchase of extra buffer support hours.
 

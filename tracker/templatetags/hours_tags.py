@@ -122,6 +122,113 @@ def entry_type_classes(entry_type):
 
 
 @register.filter
+def work_order_status_classes(status):
+    """Maps a work order status to Tailwind badge utility classes.
+
+    Args:
+        status: WorkOrder.status string ("OPEN", "IN_PROGRESS", or
+            "COMPLETED").
+
+    Returns:
+        str: Tailwind utility classes for the status badge.
+    """
+
+    return {
+        "OPEN": "bg-slate-700/50 text-slate-400 ring-1 ring-white/10",
+        "IN_PROGRESS": (
+            "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20"
+        ),
+        "COMPLETED": (
+            "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20"
+        ),
+    }.get(status, "bg-slate-700/50 text-slate-400 ring-1 ring-white/10")
+
+
+@register.filter
+def work_order_status_label(status):
+    """Maps a work order status to a human-readable label.
+
+    Args:
+        status: WorkOrder.status string ("OPEN", "IN_PROGRESS", or
+            "COMPLETED").
+
+    Returns:
+        str: Human-readable label for `status`, or `status` unchanged
+            if not recognised.
+    """
+
+    return {
+        "OPEN": "Open",
+        "IN_PROGRESS": "In progress",
+        "COMPLETED": "Completed",
+    }.get(status, status)
+
+
+@register.filter
+def item_status_classes(status):
+    """Maps a checklist item status to Tailwind badge utility classes.
+
+    Args:
+        status: WorkOrderItem.status string ("NOT_STARTED", "RUNNING",
+            "PAUSED", or "COMPLETED").
+
+    Returns:
+        str: Tailwind utility classes for the status badge.
+    """
+
+    return {
+        "NOT_STARTED": "bg-slate-700/50 text-slate-400 ring-1 ring-white/10",
+        "RUNNING": (
+            "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20"
+        ),
+        "PAUSED": "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20",
+        "COMPLETED": (
+            "bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20"
+        ),
+    }.get(status, "bg-slate-700/50 text-slate-400 ring-1 ring-white/10")
+
+
+@register.filter
+def item_status_label(status):
+    """Maps a checklist item status to a human-readable label.
+
+    Args:
+        status: WorkOrderItem.status string ("NOT_STARTED", "RUNNING",
+            "PAUSED", or "COMPLETED").
+
+    Returns:
+        str: Human-readable label for `status`, or `status` unchanged
+            if not recognised.
+    """
+
+    return {
+        "NOT_STARTED": "Not started",
+        "RUNNING": "Running",
+        "PAUSED": "Paused",
+        "COMPLETED": "Completed",
+    }.get(status, status)
+
+
+@register.filter
+def item_type_classes(billing_type):
+    """Maps a checklist item billing type to Tailwind badge utility classes.
+
+    Args:
+        billing_type: WorkOrderItem.billing_type string ("SUPPORT",
+            "SUPPORT_DEV_OVERAGE", or "DEVELOPMENT").
+
+    Returns:
+        str: Tailwind utility classes for the billing type badge.
+    """
+
+    return {
+        "SUPPORT": "bg-indigo-500/10 text-indigo-400",
+        "SUPPORT_DEV_OVERAGE": "bg-amber-500/10 text-amber-400",
+        "DEVELOPMENT": "bg-purple-500/10 text-purple-400",
+    }.get(billing_type, "bg-slate-700/50 text-slate-400")
+
+
+@register.filter
 def clamp(value, min_val=0):
     """Clamps a value to a minimum floor.
 

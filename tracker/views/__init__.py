@@ -13,6 +13,11 @@ from .DeleteRetainerView import DeleteRetainerView
 from .RetainerDetailView import RetainerDetailView
 from .LogTimeView import LogTimeView
 from .DeleteTimeEntryView import DeleteTimeEntryView
+from .WorkOrderListView import WorkOrderListView
+from .NewWorkOrderView import NewWorkOrderView
+from .EditWorkOrderView import EditWorkOrderView
+from .DeleteWorkOrderView import DeleteWorkOrderView
+from .WorkOrderDetailView import WorkOrderDetailView
 from .NewTermView import NewTermView
 from .PurchaseHoursView import PurchaseHoursView
 from .BillOverageView import BillOverageView

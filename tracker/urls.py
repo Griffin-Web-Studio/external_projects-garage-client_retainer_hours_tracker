@@ -68,6 +68,34 @@ urlpatterns = [
         name="log-time",
     ),
     path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/work-orders/",
+        login_required(views.WorkOrderListView.as_view()),
+        name="work-order-list",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/work-orders/new/",
+        login_required(views.NewWorkOrderView.as_view()),
+        name="work-order-new",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/work-orders/"
+        "<int:wo_pk>/",
+        login_required(views.WorkOrderDetailView.as_view()),
+        name="work-order-detail",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/work-orders/"
+        "<int:wo_pk>/edit/",
+        login_required(views.EditWorkOrderView.as_view()),
+        name="work-order-edit",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/work-orders/"
+        "<int:wo_pk>/delete/",
+        login_required(views.DeleteWorkOrderView.as_view()),
+        name="work-order-delete",
+    ),
+    path(
         "clients/<int:pk>/retainers/<int:retainer_pk>/new-term/",
         login_required(views.NewTermView.as_view()),
         name="new-term",

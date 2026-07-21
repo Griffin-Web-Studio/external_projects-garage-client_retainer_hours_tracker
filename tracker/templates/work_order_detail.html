@@ -1,0 +1,116 @@
+{% extends "dashboard/base.html" %}
+{% load hours_tags %}
+
+{% block title %}{{ work_order.title }} - {{ retainer.name }} - {{ APP_NAME }}{% endblock %}
+
+{% block view_body %}
+  <div class="space-y-8">
+
+    {# Header #}
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <a href="{% url 'work-order-list' client.pk retainer.pk %}"
+           class="text-slate-400 hover:text-slate-200 text-sm
+                  transition-colors"
+        >
+          &larr; Work Orders
+        </a>
+
+        <h1 class="text-2xl font-semibold text-white mt-1">
+          {{ work_order.title }}
+        </h1>
+
+        {% if work_order.description %}
+          <p class="text-sm text-slate-400 mt-1 max-w-2xl">
+            {{ work_order.description }}
+          </p>
+        {% endif %}
+
+        <span class="inline-block mt-2 text-xs px-1.5 py-0.5 rounded
+                     {{ work_order.status|work_order_status_classes }}"
+        >
+          {{ work_order.status|work_order_status_label }}
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="{% url 'work-order-edit' client.pk retainer.pk work_order.pk %}"
+           class="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300
+                  text-sm rounded-full transition-colors"
+        >
+          Edit
+        </a>
+      </div>
+    </div>
+
+    {# Checklist #}
+    <section class="space-y-3">
+      <h2 class="text-sm font-medium text-slate-400 uppercase
+                 tracking-wider"
+      >
+        Checklist
+      </h2>
+
+      {% if not items %}
+        <div class="bg-white/5 border border-secondary/20 rounded-2xl p-8
+                    text-center text-slate-500 text-sm"
+        >
+          No checklist items.
+        </div>
+      {% else %}
+        <div class="bg-white/5 border border-secondary/20 rounded-2xl
+                    divide-y divide-white/5"
+        >
+          {% for item in items %}
+            <div class="p-4 flex items-center justify-between gap-4"
+                 data-item-id="{{ item.pk }}"
+            >
+              <div>
+                <p class="text-white">{{ item.description }}</p>
+
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-xs px-1.5 py-0.5 rounded
+                              {{ item.status|item_status_classes }}"
+                  >
+                    {{ item.status|item_status_label }}
+                  </span>
+
+                  {% if item.billing_type %}
+                    <span class="text-xs px-1.5 py-0.5 rounded
+                                {{ item.billing_type|item_type_classes }}"
+                    >
+                      {{ item.get_billing_type_display }}
+                    </span>
+                  {% endif %}
+
+                  {% if item.owner %}
+                    <span class="text-xs text-slate-500">
+                      {{ item.owner.name }}
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+
+    {# Danger zone #}
+    <section class="pt-4 border-t border-white/5">
+      <form method="post"
+            action="{% url 'work-order-delete' client.pk retainer.pk work_order.pk %}"
+            onsubmit="return confirm('Permanently delete {{ work_order.title }} and its checklist?')"
+      >
+        {% csrf_token %}
+        <button type="submit"
+                class="text-xs text-slate-600 hover:text-red-400
+                      transition-colors"
+        >
+          Delete work order
+        </button>
+      </form>
+    </section>
+
+  </div>
+{% endblock %}
