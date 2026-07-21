@@ -10,7 +10,7 @@ from tracker.hours import (
     calculate_term_hours,
     get_hours_config,
 )
-from tracker.models import ClientTerm, Retainer
+from tracker.models import ClientTerm, Retainer, WorkOrder, WorkOrderItem
 
 
 def urgent_retainers(
@@ -67,3 +67,57 @@ def urgent_retainers(
     ranked.sort(key=lambda row: row[0])
 
     return [(retainer, term, summary) for _, retainer, term, summary in ranked]
+
+
+_WORK_ORDER_STATUS_RANK = {
+    WorkOrder.STATUS_IN_PROGRESS: 0,
+    WorkOrder.STATUS_OPEN: 1,
+    WorkOrder.STATUS_COMPLETED: 2,
+}
+
+
+def ranked_work_orders(
+    work_orders: Iterable[WorkOrder] | None = None,
+) -> list[WorkOrder]:
+    """Ranks work orders for the company-wide list page.
+
+    In Progress sorts first (most actionable), then Open, then
+    Completed last - most-recently-updated first within each group.
+
+    Args:
+        work_orders (Iterable[WorkOrder] | None, optional): Work orders
+            to rank. Defaults to None, in which case every work order
+            across every client is used.
+
+    Returns:
+        list[WorkOrder]: Work orders ranked most-actionable first.
+    """
+
+    if work_orders is None:
+        work_orders = WorkOrder.objects.select_related(
+            "retainer", "retainer__client"
+        ).prefetch_related("items")
+
+    ranked = sorted(work_orders, key=lambda wo: wo.updated_at, reverse=True)
+    ranked.sort(key=lambda wo: _WORK_ORDER_STATUS_RANK.get(wo.status, 3))
+
+    return ranked
+
+
+def work_order_item_progress(work_order: WorkOrder) -> tuple[int, int]:
+    """Counts a work order's completed vs. total checklist items.
+
+    Args:
+        work_order (WorkOrder): Work order to count items for - `items`
+            should already be prefetched to avoid an extra query.
+
+    Returns:
+        tuple[int, int]: `(completed_count, total_count)`.
+    """
+
+    items = list(work_order.items.all())
+    completed = sum(
+        1 for i in items if i.status == WorkOrderItem.STATUS_COMPLETED
+    )
+
+    return completed, len(items)

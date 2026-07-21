@@ -76,6 +76,13 @@ NAV_LINKS: list[NavLinkConfig] = [
         # No permission - every authenticated user can view retainers.
     },
     {
+        "name": "work-order-list-all",
+        "label": "Work Orders",
+        "icon": "icon_si_checklist",
+        "mode": DashboardMode.NORMAL,
+        # No permission - every authenticated user can view work orders.
+    },
+    {
         "name": "admin:tracker_companyprofile_changelist",
         "label": "Company Profile",
         "icon": "icon_si_buildings",

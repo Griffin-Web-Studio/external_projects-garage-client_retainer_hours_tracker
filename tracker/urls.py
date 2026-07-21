@@ -173,4 +173,9 @@ urlpatterns = [
         login_required(views.RetainerListView.as_view()),
         name="retainer-list",
     ),
+    path(
+        "work-orders/",
+        login_required(views.AllWorkOrdersView.as_view()),
+        name="work-order-list-all",
+    ),
 ]

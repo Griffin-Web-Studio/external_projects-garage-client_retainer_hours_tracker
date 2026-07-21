@@ -1,0 +1,64 @@
+{% load hours_tags %}
+{# Expects `work_order`, `completed_items`, and `total_items` in context. #}
+<a href="{% url 'work-order-detail' work_order.retainer.client_id work_order.retainer_id work_order.pk %}"
+   class="block group"
+>
+  <div class="bg-white/5 border border-secondary/20 rounded-2xl p-5
+              hover:border-secondary/40 transition-colors"
+  >
+
+    {# Top row #}
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div class="min-w-0">
+        <h2 class="font-semibold text-white truncate
+                  group-hover:text-secondary transition-colors"
+        >
+          {{ work_order.retainer.client.name }}
+          <span class="text-slate-500 font-normal">&middot;</span>
+          {{ work_order.retainer.name }}
+        </h2>
+
+        <p class="text-xs text-slate-400 mt-0.5 truncate">
+          {{ work_order.title }}
+        </p>
+      </div>
+
+      <div class="shrink-0">
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                    {{ work_order.status|work_order_status_classes }}"
+        >
+          {{ work_order.status|work_order_status_label }}
+        </span>
+      </div>
+    </div>
+
+    {# Item progress #}
+    {% if total_items %}
+      <div class="flex items-end justify-between mb-2">
+        <div>
+          <span class="font-mono text-3xl font-medium text-white">
+            {{ completed_items }}/{{ total_items }}
+          </span>
+          <span class="text-slate-400 text-sm ml-1.5">
+            items completed
+          </span>
+        </div>
+      </div>
+
+      <div class="h-1.5 rounded-full overflow-hidden bg-white/10">
+        <div class="h-full rounded-full transition-all bg-secondary"
+             style="width: {% widthratio completed_items total_items 100 %}%"
+        ></div>
+      </div>
+    {% else %}
+      <p class="text-xs text-slate-500">No checklist items yet.</p>
+    {% endif %}
+
+    <div class="flex items-center gap-4 mt-3 pt-3 border-t border-white/10
+                text-xs text-slate-400"
+    >
+      <span>Created {{ work_order.created_at|date:"j M Y" }}</span>
+    </div>
+
+  </div>
+</a>

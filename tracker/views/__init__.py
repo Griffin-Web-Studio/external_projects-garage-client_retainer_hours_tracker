@@ -23,6 +23,7 @@ from .StopTimerView import StopTimerView
 from .ConfirmOverageView import ConfirmOverageView
 from .TimerStatusView import TimerStatusView
 from .CompleteWorkOrderItemView import CompleteWorkOrderItemView
+from .AllWorkOrdersView import AllWorkOrdersView
 from .NewTermView import NewTermView
 from .PurchaseHoursView import PurchaseHoursView
 from .BillOverageView import BillOverageView
