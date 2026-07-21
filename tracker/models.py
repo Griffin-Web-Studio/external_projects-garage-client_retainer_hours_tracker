@@ -307,6 +307,15 @@ class TimeEntry(models.Model):
     type = models.CharField(
         max_length=20, choices=TYPE_CHOICES, default=TYPE_SUPPORT
     )
+    # Set only for entries created by completing a work order checklist
+    # item's timer - null for manually-logged entries (LogTimeView).
+    timer_item = models.ForeignKey(
+        "WorkOrderItem",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="time_entries",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -319,6 +328,165 @@ class TimeEntry(models.Model):
             f"{self.client.name} — {self.hours}h{suffix} {self.type} on "
             f"{self.date}"
         )
+
+
+# ─────────────────────────────────────────────────────────────| WorkOrder |──
+class WorkOrder(models.Model):
+    """WorkOrder model - a checklist of tasks a client requested against
+    one of their retainers.
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        WorkOrder: WorkOrder model
+    """
+
+    STATUS_OPEN = "OPEN"
+    STATUS_IN_PROGRESS = "IN_PROGRESS"
+    STATUS_COMPLETED = "COMPLETED"
+
+    retainer = models.ForeignKey(
+        Retainer, on_delete=models.CASCADE, related_name="work_orders"
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        Employee, on_delete=models.PROTECT, related_name="created_work_orders"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.retainer} — {self.title}"
+
+    @property
+    def status(self) -> str:
+        """Computes this work order's overall status from its items.
+
+        Not stored - derived on access, same as `Retainer.current_term`,
+        so it can never drift out of sync with the items themselves.
+
+        Returns:
+            str: `STATUS_OPEN` if it has no items or none has been
+                started, `STATUS_COMPLETED` if every item is complete,
+                otherwise `STATUS_IN_PROGRESS`.
+        """
+
+        statuses = [item.status for item in self.items.all()]
+
+        if not statuses:
+            return self.STATUS_OPEN
+
+        if all(s == WorkOrderItem.STATUS_COMPLETED for s in statuses):
+            return self.STATUS_COMPLETED
+
+        if all(s == WorkOrderItem.STATUS_NOT_STARTED for s in statuses):
+            return self.STATUS_OPEN
+
+        return self.STATUS_IN_PROGRESS
+
+
+# ───────────────────────────────────────────────────────────| WorkOrderItem |──
+class WorkOrderItem(models.Model):
+    """WorkOrderItem model - a single checklist task within a work order,
+    tracked with a pausable/resumable start-stop timer.
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        WorkOrderItem: WorkOrderItem model
+    """
+
+    STATUS_NOT_STARTED = "NOT_STARTED"
+    STATUS_RUNNING = "RUNNING"
+    STATUS_PAUSED = "PAUSED"
+    STATUS_COMPLETED = "COMPLETED"
+    STATUS_CHOICES: list[tuple[str, str]] = [
+        (STATUS_NOT_STARTED, "Not started"),
+        (STATUS_RUNNING, "Running"),
+        (STATUS_PAUSED, "Paused"),
+        (STATUS_COMPLETED, "Completed"),
+    ]
+
+    TYPE_SUPPORT = "SUPPORT"
+    TYPE_SUPPORT_DEV_OVERAGE = "SUPPORT_DEV_OVERAGE"
+    TYPE_DEVELOPMENT = "DEVELOPMENT"
+    TYPE_CHOICES: list[tuple[str, str]] = [
+        (TYPE_SUPPORT, "Support"),
+        (TYPE_SUPPORT_DEV_OVERAGE, "Support + Dev Overage"),
+        (TYPE_DEVELOPMENT, "Development"),
+    ]
+
+    work_order = models.ForeignKey(
+        WorkOrder, on_delete=models.CASCADE, related_name="items"
+    )
+    description = models.CharField(max_length=500)
+    order = models.PositiveIntegerField(default=0)
+    # Blank until the first Start - chosen once, then immutable by the
+    # user. The one exception is the system-driven SUPPORT ->
+    # SUPPORT_DEV_OVERAGE elevation when the item crosses the support cap.
+    billing_type = models.CharField(
+        max_length=25, choices=TYPE_CHOICES, blank=True
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_NOT_STARTED
+    )
+    # Set on first Start. Only this employee may Start/Stop/Complete the
+    # item from then on - keeps `TimeEntry.employee` attribution
+    # unambiguous when the item is finalised.
+    owner = models.ForeignKey(
+        Employee,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="timed_items",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.work_order.title} — {self.description}"
+
+
+# ──────────────────────────────────────────────────────────| TimerSegment |──
+class TimerSegment(models.Model):
+    """TimerSegment model - one continuous start-stop interval on a
+    WorkOrderItem's timer.
+
+    An item accumulates one of these per pause/resume cycle.
+    `ended_at is None` marks the currently-running segment, of which
+    there is at most one system-wide per employee.
+
+    Args:
+        models (Model): base model
+
+    Returns:
+        TimerSegment: TimerSegment model
+    """
+
+    item = models.ForeignKey(
+        WorkOrderItem, on_delete=models.CASCADE, related_name="segments"
+    )
+    employee = models.ForeignKey(
+        Employee, on_delete=models.PROTECT, related_name="timer_segments"
+    )
+    started_at = models.DateTimeField()
+    ended_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["started_at"]
+
+    def __str__(self):
+        state = "running" if self.ended_at is None else "ended"
+        return f"{self.item} — segment ({state})"
 
 
 # ──────────────────────────────────────────────────────────| OverageBilling |──
