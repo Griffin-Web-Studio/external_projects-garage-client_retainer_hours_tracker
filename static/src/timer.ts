@@ -437,15 +437,9 @@ class ItemTimer {
     button.type = "button";
     button.textContent = label;
     button.className = `px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${classes}`;
-    button.addEventListener("click", () => {
-      // A real click is the one place browsers allow audio to unlock and
-      // a notification permission prompt to appear - do both here so
-      // later reminders/cap events (fired from timers, not clicks) can
-      // actually reach the user.
-      unlockAudio();
-      requestNotificationPermission();
-      onClick();
-    });
+    // No unlock call needed here - clicks bubble up to the document-level
+    // listener in unlockOnFirstInteraction(), which handles it.
+    button.addEventListener("click", onClick);
     return button;
   }
 
@@ -459,12 +453,32 @@ class ItemTimer {
   }
 }
 
+// A page that already has a RUNNING item on load (the common case - you
+// started it, then just leave it running) never triggers a Start/Stop
+// click again for a long time, so relying only on timer-button clicks to
+// unlock audio/notifications misses that entirely. Unlock on the *first*
+// interaction anywhere on the page instead - a click on the sidebar, a
+// keypress, anything - so it's ready well before the first reminder.
+function unlockOnFirstInteraction(): void {
+  const handler = (): void => {
+    unlockAudio();
+    requestNotificationPermission();
+    document.removeEventListener("click", handler);
+    document.removeEventListener("keydown", handler);
+  };
+
+  document.addEventListener("click", handler, { once: true });
+  document.addEventListener("keydown", handler, { once: true });
+}
+
 export function initWorkOrderTimers(): void {
   const page = document.querySelector<HTMLElement>("[data-timer-page]");
 
   if (!page) {
     return;
   }
+
+  unlockOnFirstInteraction();
 
   const currentEmployeeId = Number(page.dataset.employeeId);
   const reminderMinutes = (page.dataset.reminderMinutes ?? "")
