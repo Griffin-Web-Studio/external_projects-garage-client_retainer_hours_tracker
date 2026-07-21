@@ -37,6 +37,13 @@ class HoursConfig:
             time entry can be logged for.
         min_overage_billing_minutes (int): Minimum total minutes a
             single overage billing can be recorded for.
+        max_support_minutes_per_task (int): Hard cap on a Support-typed
+            work order checklist item's timer before it must be
+            escalated to Support + Dev Overage billing.
+        timer_reminder_minutes (tuple[int, ...]): Minutes into a running
+            checklist item timer at which an audible reminder plays.
+        max_dev_hours_per_day (float): Daily cap on Development-billed
+            timer time per employee.
     """
 
     term_months: int = 12
@@ -47,6 +54,9 @@ class HoursConfig:
     low_hours_threshold: float = 75.0  # % used before "low" warning triggers
     min_log_entry_minutes: int = 5
     min_overage_billing_minutes: int = 1
+    max_support_minutes_per_task: int = 30
+    timer_reminder_minutes: tuple[int, ...] = (10, 15, 20)
+    max_dev_hours_per_day: float = 8.0
 
 
 def get_hours_config() -> HoursConfig:
@@ -71,6 +81,9 @@ def get_hours_config() -> HoursConfig:
             low_hours_threshold=cfg.low_hours_threshold,
             min_log_entry_minutes=cfg.min_log_entry_minutes,
             min_overage_billing_minutes=cfg.min_overage_billing_minutes,
+            max_support_minutes_per_task=cfg.max_support_minutes_per_task,
+            timer_reminder_minutes=cfg.timer_reminder_minutes,
+            max_dev_hours_per_day=cfg.max_dev_hours_per_day,
         )
 
     except Exception:
@@ -129,6 +142,40 @@ def get_min_overage_billing_minutes() -> int:
     """
 
     return get_hours_config().min_overage_billing_minutes
+
+
+def get_max_support_minutes_per_task() -> int:
+    """Gets the configured cap on a Support-typed checklist item's timer.
+
+    Returns:
+        int: Minutes a Support-typed work order checklist item's timer
+            may run before it must be escalated to Support + Dev
+            Overage billing.
+    """
+
+    return get_hours_config().max_support_minutes_per_task
+
+
+def get_timer_reminder_minutes() -> tuple[int, ...]:
+    """Gets the configured audible-reminder thresholds for a running timer.
+
+    Returns:
+        tuple[int, ...]: Minutes into a running checklist item timer at
+            which an audible reminder plays.
+    """
+
+    return get_hours_config().timer_reminder_minutes
+
+
+def get_max_dev_hours_per_day() -> float:
+    """Gets the configured daily cap on Development-billed timer time.
+
+    Returns:
+        float: Maximum hours of Development-billed timer time a single
+            employee may accrue in one day.
+    """
+
+    return get_hours_config().max_dev_hours_per_day
 
 
 # ─────────────────────────────────────────────────────────────────| Helpers |──

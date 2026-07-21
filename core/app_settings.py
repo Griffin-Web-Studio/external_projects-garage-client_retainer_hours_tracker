@@ -40,6 +40,9 @@ class AppConfig:
     low_hours_threshold: float
     min_log_entry_minutes: int
     min_overage_billing_minutes: int
+    max_support_minutes_per_task: int
+    timer_reminder_minutes: tuple[int, ...]  # tuple keeps the instance hashable
+    max_dev_hours_per_day: float
 
     # ────────────────────────────────────────────────────────────────| OIDC |──
     oidc_enabled: bool
@@ -115,6 +118,19 @@ class AppConfig:
             ),
             min_overage_billing_minutes=config.getint(
                 "hours", "min_overage_billing_minutes", fallback=1
+            ),
+            max_support_minutes_per_task=config.getint(
+                "hours", "max_support_minutes_per_task", fallback=30
+            ),
+            timer_reminder_minutes=tuple(
+                int(m.strip())
+                for m in config.get(
+                    "hours", "timer_reminder_minutes", fallback="10, 15, 20"
+                ).split(",")
+                if m.strip()
+            ),
+            max_dev_hours_per_day=config.getfloat(
+                "hours", "max_dev_hours_per_day", fallback=8.0
             ),
             # ── OIDC ──────────────────────────────────────────────────────────
             oidc_enabled=bool(oidc_issuer),
