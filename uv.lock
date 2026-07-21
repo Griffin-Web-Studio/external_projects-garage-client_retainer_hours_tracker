@@ -227,7 +227,7 @@ wheels = [
 
 [[package]]
 name = "client-retainer-hours-tracker"
-version = "0.1.0a11"
+version = "0.1.0a12"
 source = { virtual = "." }
 dependencies = [
     { name = "django" },

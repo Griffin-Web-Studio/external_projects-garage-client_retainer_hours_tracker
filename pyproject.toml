@@ -1,6 +1,6 @@
 [project]
 name = "client-retainer-hours-tracker"
-version = "0.1.0-alpha.11"
+version = "0.1.0-alpha.12"
 description = "App for tracking client retainer hours"
 requires-python = ">=3.14"
 dependencies = [
@@ -39,7 +39,7 @@ exclude = '''
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.0-alpha.11"
+version = "0.1.0-alpha.12"
 version_scheme = "semver2"
 tag_format = "v$version"
 update_changelog_on_bump = true
@@ -47,6 +47,14 @@ changelog_incremental = true
 changelog_merge_prerelease = true
 version_files = [
   "pyproject.toml:^version",
+]
+# Runs after pyproject.toml's version is written but before the release
+# commit is created, so `uv lock` picks up the new version and the
+# refreshed uv.lock lands in the same commit - not a separate manual
+# follow-up bump like `bump(self): bump self version in uv lock`.
+pre_bump_hooks = [
+  "uv lock",
+  "git add uv.lock",
 ]
 
 [tool.commitizen.change_type_map]

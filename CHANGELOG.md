@@ -1,3 +1,23 @@
+## v0.1.0-alpha.12 (2026-07-21)
+
+### Bug Fixes
+
+- **timers**: recompute isMine live instead of caching it at page load
+
+### Features
+
+- **timers**: add browser notifications and fix silent audio dings
+- **timers**: add browser notifications and fix silent audio dings
+- **work-orders**: add company-wide Work Orders list + sidebar nav link
+- **work-orders**: add Work Orders link to the retainer detail page
+- **timers**: add live timer UI (timer controls, dings, cap prompts)
+- **static/ts**: add typescript support
+- **timers**: add start/stop/confirm-overage/status JSON endpoints
+- **work-orders**: add Work Order CRUD (list/create/detail/edit/delete)
+- **timers**: add work order item timer business logic
+- **models**: add WorkOrder, WorkOrderItem, and TimerSegment models
+- **hours**: add configurable timer thresholds to settings.ini
+
 ## v0.1.0-alpha.11 (2026-07-15)
 
 ### Bug Fixes
