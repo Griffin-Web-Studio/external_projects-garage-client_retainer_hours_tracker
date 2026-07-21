@@ -235,4 +235,5 @@ def status_payload(item: WorkOrderItem, status: TimerStatus) -> dict:
         "should_pause_for_cap": status.should_pause_for_cap,
         "should_hard_stop_for_daily_cap": status.should_hard_stop_for_daily_cap,
         "owner": item.owner.name if item.owner else None,
+        "owner_id": item.owner_id,
     }

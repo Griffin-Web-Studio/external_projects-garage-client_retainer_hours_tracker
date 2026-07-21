@@ -21,6 +21,7 @@ interface TimerStatusPayload {
   should_pause_for_cap: boolean;
   should_hard_stop_for_daily_cap: boolean;
   owner: string | null;
+  owner_id: number | null;
 }
 
 interface ErrorPayload {
@@ -135,7 +136,7 @@ class ItemTimer {
     status: string;
     complete: string;
   };
-  private readonly isMine: boolean;
+  private readonly currentEmployeeId: number;
   private readonly reminderMinutes: number[];
   private readonly dingedThresholds = new Set<number>();
 
@@ -161,7 +162,7 @@ class ItemTimer {
       complete: root.dataset.completeUrl ?? "",
     };
     this.state = JSON.parse(root.dataset.status ?? "{}") as TimerStatusPayload;
-    this.isMine = this.state.owner !== null && Number(root.dataset.ownerId) === currentEmployeeId;
+    this.currentEmployeeId = currentEmployeeId;
     this.reminderMinutes = reminderMinutes;
 
     this.elapsedEl = root.querySelector("[data-elapsed-display]");
@@ -180,8 +181,15 @@ class ItemTimer {
     return this.state.status === "RUNNING" || this.state.status === "PAUSED";
   }
 
+  /** Recomputed from the latest known state on every call - `owner_id`
+   * changes the moment a Start action succeeds, so this must never be
+   * cached from the page's initial load. */
+  private isMine(): boolean {
+    return this.state.owner_id === this.currentEmployeeId;
+  }
+
   isRunningLive(): boolean {
-    return this.state.status === "RUNNING" && this.isMine;
+    return this.state.status === "RUNNING" && this.isMine();
   }
 
   tick(): void {
@@ -319,7 +327,7 @@ class ItemTimer {
       return;
     }
 
-    if (!this.isMine) {
+    if (!this.isMine()) {
       return;
     }
 

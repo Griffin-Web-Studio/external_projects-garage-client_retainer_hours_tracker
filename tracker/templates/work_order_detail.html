@@ -70,7 +70,6 @@
                           flex-wrap"
                    data-timer-item
                    data-item-id="{{ item.pk }}"
-                   data-owner-id="{{ item.owner_id|default:'' }}"
                    data-status='{{ row.status_json }}'
                    data-start-url="{% url 'timer-start' client.pk retainer.pk work_order.pk item.pk %}"
                    data-stop-url="{% url 'timer-stop' client.pk retainer.pk work_order.pk item.pk %}"
