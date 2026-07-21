@@ -18,6 +18,11 @@ from .NewWorkOrderView import NewWorkOrderView
 from .EditWorkOrderView import EditWorkOrderView
 from .DeleteWorkOrderView import DeleteWorkOrderView
 from .WorkOrderDetailView import WorkOrderDetailView
+from .StartTimerView import StartTimerView
+from .StopTimerView import StopTimerView
+from .ConfirmOverageView import ConfirmOverageView
+from .TimerStatusView import TimerStatusView
+from .CompleteWorkOrderItemView import CompleteWorkOrderItemView
 from .NewTermView import NewTermView
 from .PurchaseHoursView import PurchaseHoursView
 from .BillOverageView import BillOverageView

@@ -168,3 +168,71 @@ def check_thresholds(
         should_pause_for_cap=should_pause_for_cap,
         should_hard_stop_for_daily_cap=should_hard_stop_for_daily_cap,
     )
+
+
+def enforce_caps(
+    item: WorkOrderItem, config: HoursConfig | None = None
+) -> TimerStatus:
+    """Ends an item's active timer segment if a cap has been crossed.
+
+    Called from every timer JSON endpoint (not just a dedicated
+    polling one) so a cap can't be exceeded just because the client
+    hasn't polled `.../status/` recently - the support cap pause and
+    the daily development cap hard-stop both take effect the moment
+    any request touches the item, not on some separate schedule.
+
+    Args:
+        item (WorkOrderItem): Item to check and, if needed, stop.
+        config (HoursConfig | None, optional): Hours config. Defaults
+            to None, in which case `get_hours_config()` is used.
+
+    Returns:
+        TimerStatus: The item's status after any enforcement - re-
+            computed if a segment was ended, otherwise the same as an
+            unconditional `check_thresholds` call would return.
+    """
+
+    if config is None:
+        config = get_hours_config()
+
+    status = check_thresholds(item, config)
+
+    if status.should_pause_for_cap or status.should_hard_stop_for_daily_cap:
+        segment = item.segments.filter(ended_at__isnull=True).first()
+
+        if segment is not None:
+            segment.ended_at = timezone.now()
+            segment.save()
+
+            if item.status == WorkOrderItem.STATUS_RUNNING:
+                item.status = WorkOrderItem.STATUS_PAUSED
+                item.save()
+
+            status = check_thresholds(item, config)
+
+    return status
+
+
+def status_payload(item: WorkOrderItem, status: TimerStatus) -> dict:
+    """Builds the JSON-serialisable response body for a timer endpoint.
+
+    Args:
+        item (WorkOrderItem): Item the status was computed for.
+        status (TimerStatus): Status computed by `check_thresholds` or
+            `enforce_caps`.
+
+    Returns:
+        dict: JSON-serialisable timer status for the frontend.
+    """
+
+    return {
+        "item_id": item.pk,
+        "status": item.status,
+        "billing_type": item.billing_type,
+        "elapsed_minutes": status.elapsed_minutes,
+        "support_minutes": status.support_minutes,
+        "dev_minutes": status.dev_minutes,
+        "should_pause_for_cap": status.should_pause_for_cap,
+        "should_hard_stop_for_daily_cap": status.should_hard_stop_for_daily_cap,
+        "owner": item.owner.name if item.owner else None,
+    }

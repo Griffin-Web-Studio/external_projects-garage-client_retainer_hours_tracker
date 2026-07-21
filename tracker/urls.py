@@ -96,6 +96,36 @@ urlpatterns = [
         name="work-order-delete",
     ),
     path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/work-orders/"
+        "<int:wo_pk>/items/<int:item_pk>/start/",
+        login_required(views.StartTimerView.as_view()),
+        name="timer-start",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/work-orders/"
+        "<int:wo_pk>/items/<int:item_pk>/stop/",
+        login_required(views.StopTimerView.as_view()),
+        name="timer-stop",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/work-orders/"
+        "<int:wo_pk>/items/<int:item_pk>/confirm-overage/",
+        login_required(views.ConfirmOverageView.as_view()),
+        name="timer-confirm-overage",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/work-orders/"
+        "<int:wo_pk>/items/<int:item_pk>/status/",
+        login_required(views.TimerStatusView.as_view()),
+        name="timer-status",
+    ),
+    path(
+        "clients/<int:pk>/retainers/<int:retainer_pk>/work-orders/"
+        "<int:wo_pk>/items/<int:item_pk>/complete/",
+        login_required(views.CompleteWorkOrderItemView.as_view()),
+        name="work-order-item-complete",
+    ),
+    path(
         "clients/<int:pk>/retainers/<int:retainer_pk>/new-term/",
         login_required(views.NewTermView.as_view()),
         name="new-term",

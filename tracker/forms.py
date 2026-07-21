@@ -11,7 +11,7 @@ from tracker.hours import (
     get_min_overage_billing_minutes,
     hm_to_minutes,
 )
-from tracker.models import HoursPurchase
+from tracker.models import HoursPurchase, WorkOrderItem
 
 
 def _validate_min_duration(
@@ -534,6 +534,117 @@ class EditWorkOrderForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={"rows": 3}),
     )
+
+
+class CompleteWorkOrderItemForm(forms.Form):
+    """Form for reviewing and adjusting a checklist item's tracked time
+    before it's committed as one or two `TimeEntry` rows.
+
+    Which hours/minutes field pairs exist depends on `billing_type`,
+    passed in `__init__`: `support_hours`/`support_minutes` for SUPPORT
+    and SUPPORT_DEV_OVERAGE items, `dev_hours`/`dev_minutes` for
+    DEVELOPMENT and SUPPORT_DEV_OVERAGE items. Values are pre-filled
+    from the timer's computed elapsed time but stay fully editable, so
+    a timer accidentally left running can be corrected down (or up)
+    per-bucket before anything is saved.
+
+    Attributes:
+        description (CharField): Description saved on the resulting
+            `TimeEntry` row(s) - pre-filled from the checklist item's
+            own description but editable.
+    """
+
+    description = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3}),
+    )
+
+    def __init__(self, *args, billing_type, **kwargs):
+        """Adds the hours/minutes field pairs relevant to `billing_type`.
+
+        Args:
+            *args: Positional arguments forwarded to `forms.Form.__init__`.
+            billing_type (str): The checklist item's `billing_type` -
+                determines which hours/minutes fields are added.
+            **kwargs: Keyword arguments forwarded to `forms.Form.__init__`.
+        """
+
+        super().__init__(*args, **kwargs)
+        self.billing_type = billing_type
+
+        if billing_type in (
+            WorkOrderItem.TYPE_SUPPORT,
+            WorkOrderItem.TYPE_SUPPORT_DEV_OVERAGE,
+        ):
+            self.fields["support_hours"] = forms.IntegerField(
+                min_value=0, label="Support hours"
+            )
+            self.fields["support_minutes"] = forms.IntegerField(
+                min_value=0, max_value=59, label="Support minutes"
+            )
+
+        if billing_type in (
+            WorkOrderItem.TYPE_DEVELOPMENT,
+            WorkOrderItem.TYPE_SUPPORT_DEV_OVERAGE,
+        ):
+            self.fields["dev_hours"] = forms.IntegerField(
+                min_value=0, label="Development hours"
+            )
+            self.fields["dev_minutes"] = forms.IntegerField(
+                min_value=0, max_value=59, label="Development minutes"
+            )
+
+    def clean(self):
+        """Validates each present duration is either 0 or meets the
+        configured minimum log entry duration, and that the total
+        isn't zero.
+
+        A bucket can legitimately be adjusted down to 0 (e.g. a
+        SUPPORT_DEV_OVERAGE item corrected back to pure Support), but
+        the overall tracked time can't vanish entirely.
+
+        Returns:
+            dict: The form's cleaned data.
+
+        Raises:
+            forms.ValidationError: If a non-zero bucket is below the
+                minimum log entry duration, or if every present bucket
+                is 0.
+        """
+
+        cleaned_data = super().clean()
+        min_minutes = get_min_log_entry_minutes()
+        total_minutes = 0
+
+        for hours_field, minutes_field in (
+            ("support_hours", "support_minutes"),
+            ("dev_hours", "dev_minutes"),
+        ):
+            if hours_field not in self.fields:
+                continue
+
+            hours = cleaned_data.get(hours_field)
+            minutes = cleaned_data.get(minutes_field)
+
+            if hours is None or minutes is None:
+                continue
+
+            bucket_minutes = hm_to_minutes(hours, minutes)
+
+            if 0 < bucket_minutes < min_minutes:
+                raise forms.ValidationError(
+                    {
+                        hours_field: (
+                            f"Must be 0 or at least {min_minutes} minutes."
+                        )
+                    }
+                )
+
+            total_minutes += bucket_minutes
+
+        if total_minutes == 0:
+            raise forms.ValidationError("Total tracked time can't be zero.")
+
+        return cleaned_data
 
 
 class HoursPurchaseForm(forms.Form):
