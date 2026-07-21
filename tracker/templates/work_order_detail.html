@@ -51,7 +51,7 @@
         Checklist
       </h2>
 
-      {% if not items %}
+      {% if not rows %}
         <div class="bg-white/5 border border-secondary/20 rounded-2xl p-8
                     text-center text-slate-500 text-sm"
         >
@@ -60,37 +60,68 @@
       {% else %}
         <div class="bg-white/5 border border-secondary/20 rounded-2xl
                     divide-y divide-white/5"
+             data-timer-page
+             data-employee-id="{{ current_employee_id }}"
+             data-reminder-minutes="{{ reminder_minutes }}"
         >
-          {% for item in items %}
-            <div class="p-4 flex items-center justify-between gap-4"
-                 data-item-id="{{ item.pk }}"
-            >
-              <div>
-                <p class="text-white">{{ item.description }}</p>
+          {% for row in rows %}
+            {% with item=row.item %}
+              <div class="p-4 flex items-center justify-between gap-4
+                          flex-wrap"
+                   data-timer-item
+                   data-item-id="{{ item.pk }}"
+                   data-owner-id="{{ item.owner_id|default:'' }}"
+                   data-status='{{ row.status_json }}'
+                   data-start-url="{% url 'timer-start' client.pk retainer.pk work_order.pk item.pk %}"
+                   data-stop-url="{% url 'timer-stop' client.pk retainer.pk work_order.pk item.pk %}"
+                   data-confirm-overage-url="{% url 'timer-confirm-overage' client.pk retainer.pk work_order.pk item.pk %}"
+                   data-status-url="{% url 'timer-status' client.pk retainer.pk work_order.pk item.pk %}"
+                   data-complete-url="{% url 'work-order-item-complete' client.pk retainer.pk work_order.pk item.pk %}"
+              >
+                <div>
+                  <p class="text-white">{{ item.description }}</p>
 
-                <div class="flex items-center gap-2 mt-1">
-                  <span class="text-xs px-1.5 py-0.5 rounded
-                              {{ item.status|item_status_classes }}"
-                  >
-                    {{ item.status|item_status_label }}
-                  </span>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span data-status-badge
+                          class="text-xs px-1.5 py-0.5 rounded
+                                {{ item.status|item_status_classes }}"
+                    >
+                      {{ item.status|item_status_label }}
+                    </span>
 
-                  {% if item.billing_type %}
-                    <span class="text-xs px-1.5 py-0.5 rounded
-                                {{ item.billing_type|item_type_classes }}"
+                    <span data-type-badge
+                          class="text-xs px-1.5 py-0.5 rounded
+                                {{ item.billing_type|item_type_classes }}
+                                {% if not item.billing_type %}hidden{% endif %}"
                     >
                       {{ item.get_billing_type_display }}
                     </span>
-                  {% endif %}
 
-                  {% if item.owner %}
-                    <span class="text-xs text-slate-500">
-                      {{ item.owner.name }}
-                    </span>
-                  {% endif %}
+                    {% if item.owner %}
+                      <span class="text-xs text-slate-500">
+                        {{ item.owner.name }}
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  <p data-timer-error
+                     class="text-xs text-red-400 mt-1 hidden"
+                  ></p>
+                </div>
+
+                <div class="flex items-center gap-3 shrink-0">
+                  <span data-elapsed-display
+                        class="font-mono text-sm text-white"
+                  >
+                    {{ row.elapsed_minutes|fmt_hm }}
+                  </span>
+
+                  <div data-timer-actions
+                       class="flex items-center gap-2 flex-wrap"
+                  ></div>
                 </div>
               </div>
-            </div>
+            {% endwith %}
           {% endfor %}
         </div>
       {% endif %}

@@ -1,3 +1,5 @@
-const word: string = "world";
+import { initWorkOrderTimers } from "./timer";
 
-console.log("hello " + word);
+document.addEventListener("DOMContentLoaded", () => {
+  initWorkOrderTimers();
+});
