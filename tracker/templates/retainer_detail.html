@@ -75,6 +75,13 @@
             Log Time
           </a>
 
+          <a href="{% url 'work-order-list' client.pk retainer.pk %}"
+             class="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300
+                    text-sm rounded-full transition-colors"
+          >
+            Work Orders
+          </a>
+
           <a href="{% url 'retainer-edit' client.pk retainer.pk %}"
              class="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300
                     text-sm rounded-full transition-colors"
