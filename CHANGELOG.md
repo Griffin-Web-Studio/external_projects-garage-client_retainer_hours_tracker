@@ -1,3 +1,9 @@
+## v0.1.0-alpha.13 (2026-07-21)
+
+### Bug Fixes
+
+- **dockerfile**: build the TS bundle too,, before collectstatic
+
 ## v0.1.0-alpha.12 (2026-07-21)
 
 ### Bug Fixes
