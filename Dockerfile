@@ -1,9 +1,13 @@
 # syntax=docker/dockerfile:1
 
-# ─────────────────────────────────────────────────────────| CSS build stage |──
-# Compiles Tailwind v4 (static/src/global.css -> static/build/css/final.css).
-# static/build/ is gitignored, so this has to happen at image-build time.
-FROM node:22-slim AS css-builder
+# ───────────────────────────────────────────────────────| Static build stage |──
+# Compiles Tailwind v4 (static/src/global.css -> static/build/css/final.css)
+# and the TypeScript bundle (static/src/index.ts -> static/build/js/index.js
+# via esbuild). static/build/ is gitignored, so this has to happen at
+# image-build time - collectstatic below needs both to already exist, or it
+# raises "Missing staticfiles manifest entry" at runtime for whichever one
+# is missing.
+FROM node:22-slim AS static-builder
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 WORKDIR /app
@@ -19,7 +23,8 @@ RUN corepack enable && pnpm install --frozen-lockfile
 # explicitly-inlined safelist classes, not what the templates actually use.
 COPY static/src ./static/src
 COPY tracker/templates ./tracker/templates
-RUN pnpm css:build
+COPY esbuild.config.mjs tsconfig.json ./
+RUN pnpm build
 
 # ───────────────────────────────────────────────| Python dependencies stage |──
 FROM python:3.14-slim AS python-builder
@@ -36,9 +41,9 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-# Now the app itself, plus the compiled CSS from the previous stage.
+# Now the app itself, plus the compiled CSS/JS from the previous stage.
 COPY . .
-COPY --from=css-builder /app/static/build ./static/build
+COPY --from=static-builder /app/static/build ./static/build
 RUN uv sync --frozen --no-dev
 
 # collectstatic needs Django settings to load, but not real secrets - these
