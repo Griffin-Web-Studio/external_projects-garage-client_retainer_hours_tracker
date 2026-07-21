@@ -99,16 +99,45 @@ function formatElapsed(totalMinutes: number): string {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 }
 
-// Short synthesised beep - no audio asset to source/license, and it keeps
-// the feature self-contained. Only audible while this tab is open and the
-// browser hasn't blocked audio; there's no push-notification fallback.
-function playDing(): void {
+// Browsers only allow audio to play from a context that was created (or
+// resumed) during a genuine user gesture - a fresh AudioContext made from
+// a setInterval callback (e.g. a reminder firing while the timer just
+// ticks along) is silently suspended in most browsers. `unlockAudio()` is
+// called from every button click (a real gesture) to create the context
+// once and keep resuming it; `playDing()` then just reuses that same
+// context from any callback, gesture or not.
+let sharedAudioContext: AudioContext | null = null;
+
+function unlockAudio(): void {
   try {
     const AudioContextCtor =
       window.AudioContext ||
       (window as unknown as { webkitAudioContext: typeof AudioContext })
         .webkitAudioContext;
-    const ctx = new AudioContextCtor();
+
+    if (!sharedAudioContext) {
+      sharedAudioContext = new AudioContextCtor();
+    }
+
+    if (sharedAudioContext.state === "suspended") {
+      void sharedAudioContext.resume();
+    }
+  } catch {
+    // Audio unavailable (unsupported browser, etc.) - the browser
+    // Notification (if permitted) still carries the alert.
+  }
+}
+
+// Short synthesised beep - no audio asset to source/license, and it keeps
+// the feature self-contained. Only audible while this tab is open, audio
+// has been unlocked by a prior click, and the browser hasn't blocked it.
+function playDing(): void {
+  if (!sharedAudioContext) {
+    return;
+  }
+
+  try {
+    const ctx = sharedAudioContext;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
@@ -121,8 +150,33 @@ function playDing(): void {
     osc.start();
     osc.stop(ctx.currentTime + 0.4);
   } catch {
-    // Audio unavailable (blocked autoplay, unsupported browser, etc.) -
-    // the recorded time is correct server-side regardless.
+    // Audio unavailable - the recorded time is correct server-side and
+    // the Notification (if permitted) still carries the alert.
+  }
+}
+
+// Browser Notification API - shows a system-level toast even if this tab
+// isn't focused, as long as it's still open somewhere. Requires a one-
+// time permission grant, requested (like unlockAudio) from a real click
+// rather than on page load, since browsers may suppress an unsolicited
+// prompt. This is a "tab must stay open" notification, not true push -
+// it won't reach the user if the tab/browser has been closed entirely.
+function requestNotificationPermission(): void {
+  if ("Notification" in window && Notification.permission === "default") {
+    void Notification.requestPermission();
+  }
+}
+
+function notify(title: string, body: string): void {
+  if (!("Notification" in window) || Notification.permission !== "granted") {
+    return;
+  }
+
+  try {
+    new Notification(title, { body });
+  } catch {
+    // Notification construction can fail in some contexts - the in-tab
+    // ding/UI state still reflects the correct server truth regardless.
   }
 }
 
@@ -138,6 +192,7 @@ class ItemTimer {
   };
   private readonly currentEmployeeId: number;
   private readonly reminderMinutes: number[];
+  private readonly description: string;
   private readonly dingedThresholds = new Set<number>();
 
   private readonly elapsedEl: HTMLElement | null;
@@ -164,6 +219,7 @@ class ItemTimer {
     this.state = JSON.parse(root.dataset.status ?? "{}") as TimerStatusPayload;
     this.currentEmployeeId = currentEmployeeId;
     this.reminderMinutes = reminderMinutes;
+    this.description = root.dataset.itemDescription ?? "this item";
 
     this.elapsedEl = root.querySelector("[data-elapsed-display]");
     this.statusBadgeEl = root.querySelector("[data-status-badge]");
@@ -206,6 +262,10 @@ class ItemTimer {
         if (liveElapsed >= threshold && !this.dingedThresholds.has(threshold)) {
           this.dingedThresholds.add(threshold);
           playDing();
+          notify(
+            "Timer reminder",
+            `${threshold} minutes elapsed on "${this.description}".`
+          );
         }
       }
     }
@@ -277,6 +337,11 @@ class ItemTimer {
     if (hitCapJustNow) {
       this.dingedCapAlready = true;
       playDing();
+      const message = status.should_pause_for_cap
+        ? `Support cap reached on "${this.description}" - confirm to `
+          + "continue as overage."
+        : `Daily development hour limit reached on "${this.description}".`;
+      notify("Timer paused", message);
     }
     if (status.status !== "PAUSED") {
       this.dingedCapAlready = false;
@@ -372,7 +437,15 @@ class ItemTimer {
     button.type = "button";
     button.textContent = label;
     button.className = `px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${classes}`;
-    button.addEventListener("click", onClick);
+    button.addEventListener("click", () => {
+      // A real click is the one place browsers allow audio to unlock and
+      // a notification permission prompt to appear - do both here so
+      // later reminders/cap events (fired from timers, not clicks) can
+      // actually reach the user.
+      unlockAudio();
+      requestNotificationPermission();
+      onClick();
+    });
     return button;
   }
 
