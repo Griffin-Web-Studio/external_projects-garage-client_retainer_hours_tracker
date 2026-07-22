@@ -1,3 +1,14 @@
+## v0.1.0-alpha.14 (2026-07-22)
+
+### Bug Fixes
+
+- **admin**: register WorkOrder, WorkOrderItem, and TimerSegment
+
+### Features
+
+- **admin**: add auto-promote the first-ever user
+- **admin**: add elevate_admin command
+
 ## v0.1.0-alpha.13 (2026-07-21)
 
 ### Bug Fixes
