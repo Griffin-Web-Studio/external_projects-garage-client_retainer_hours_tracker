@@ -74,6 +74,11 @@ class RetainerOIDCBackend(OIDCAuthenticationBackend):
     def create_user(self, claims):
         """Auto-provisions an Employee on first successful OIDC login.
 
+        The very first Employee ever created in the system - regardless
+        of how any earlier ones were made (seeded, `createsuperuser`,
+        etc.) - is auto-promoted to admin, so a fresh deployment always
+        ends up with at least one admin without a manual DB edit.
+
         Args:
             claims (dict): Claims returned by the OIDC userinfo endpoint.
 
@@ -96,6 +101,8 @@ class RetainerOIDCBackend(OIDCAuthenticationBackend):
 
             return None
 
+        is_first_employee = not self.UserModel.objects.exists()
+
         name = (
             claims.get("name")
             or claims.get("preferred_username")
@@ -103,6 +110,17 @@ class RetainerOIDCBackend(OIDCAuthenticationBackend):
         )
         user = self.UserModel.objects.create_user(email=email, name=name)
         logger.info("OIDC: auto-provisioned employee %s", email)
+
+        if is_first_employee:
+            user.role = self.UserModel.ROLE_ADMIN
+            user.is_staff = True
+            user.is_superuser = True
+            user.save(update_fields=["role", "is_staff", "is_superuser"])
+            logger.info(
+                "OIDC: %s is the first employee in the system - "
+                "auto-promoted to admin",
+                email,
+            )
 
         return user
 
