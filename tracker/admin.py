@@ -11,6 +11,9 @@ from .models import (
     ReportTemplate,
     Retainer,
     TimeEntry,
+    TimerSegment,
+    WorkOrder,
+    WorkOrderItem,
 )
 
 
@@ -95,6 +98,32 @@ class TimeEntryAdmin(admin.ModelAdmin):
     )
     list_filter = ("type",)
     search_fields = ("client__name", "retainer__name", "description")
+
+
+@admin.register(WorkOrder)
+class WorkOrderAdmin(admin.ModelAdmin):
+    list_display = ("title", "retainer", "status", "created_by", "created_at")
+    search_fields = ("title", "retainer__name", "retainer__client__name")
+
+
+@admin.register(WorkOrderItem)
+class WorkOrderItemAdmin(admin.ModelAdmin):
+    list_display = (
+        "description",
+        "work_order",
+        "status",
+        "billing_type",
+        "owner",
+        "order",
+    )
+    list_filter = ("status", "billing_type")
+    search_fields = ("description", "work_order__title")
+
+
+@admin.register(TimerSegment)
+class TimerSegmentAdmin(admin.ModelAdmin):
+    list_display = ("item", "employee", "started_at", "ended_at")
+    search_fields = ("item__description", "employee__name")
 
 
 @admin.register(OverageBilling)
