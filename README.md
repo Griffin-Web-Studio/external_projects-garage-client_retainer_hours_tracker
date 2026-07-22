@@ -163,6 +163,29 @@ Users are auto-provisioned on first login if their email domain is listed in
 recommended for production). The provisioned account has no Django password
 and can only authenticate via OIDC.
 
+**The very first employee ever created in the system** - counting however
+it happened, not just OIDC - **is automatically promoted to admin**
+(`role=ADMIN`, `is_staff`, `is_superuser`) the moment they log in via OIDC.
+This means:
+
+- If you go straight to OIDC without ever running `python manage.py seed`,
+  the first person to sign in becomes an admin automatically - a fresh
+  deployment never gets stuck with zero admins.
+- If you already ran `seed` (which creates the `admin@example.com`
+  account), that account is the first employee, so this auto-promotion
+  won't re-trigger for the first OIDC login - you already have an admin.
+
+### Granting admin access later
+
+```bash
+python manage.py elevate_admin                          # lists employees, prompts for a choice
+python manage.py elevate_admin --email someone@yourcompany.io   # skip the prompt
+```
+
+Sets `role=ADMIN`, `is_staff=True`, and `is_superuser=True` on the chosen
+employee - the same flags the first-user auto-promotion above sets. Useful
+any time you need to promote someone who wasn't first through the door.
+
 ### Local fallback
 
 Django admin (`/admin/`) uses standard username/password, but only
